@@ -1,6 +1,7 @@
 import type { ScanItem } from '../shared/types.js';
 import { isValidBarcode, PRODUCT_DATABASES, parseOpenFoodFactsResponse, USER_AGENT } from './openFoodFacts.js';
 import { isIsbn13, lookupBook } from './openLibrary.js';
+import { lookupGoogleBook } from './googleBooks.js';
 
 async function lookupProduct(baseUrl: string, code: string, db: (typeof PRODUCT_DATABASES)[number]): Promise<ScanItem | null> {
   const res = await fetch(`${baseUrl}/${code}.json`, {
@@ -27,12 +28,14 @@ export async function lookupBarcode(code: string): Promise<ScanItem | null> {
   }
 
   if (isIsbn13(code)) {
-    try {
-      const book = await lookupBook(code);
-      answered = true;
-      if (book) return book;
-    } catch (err) {
-      errors.push(err);
+    for (const lookup of [lookupBook, lookupGoogleBook]) {
+      try {
+        const book = await lookup(code);
+        answered = true;
+        if (book) return book;
+      } catch (err) {
+        errors.push(err);
+      }
     }
   }
 

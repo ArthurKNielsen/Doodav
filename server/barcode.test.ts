@@ -54,3 +54,27 @@ describe('lookupBarcode', () => {
     await expect(lookupBarcode(CODE)).rejects.toThrow();
   });
 });
+
+describe('lookupBarcode for books', () => {
+  const ISBN = '9780306406157';
+
+  it('falls back to Google Books when Open Library does not have the ISBN', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes('openfoodfacts.org') || url.includes('openproductsfacts.org') || url.includes('openbeautyfacts.org')) {
+          return missing();
+        }
+        if (url.includes('openlibrary.org')) return Response.json({});
+        if (url.includes('googleapis.com')) {
+          return Response.json({ items: [{ volumeInfo: { title: 'Found By Google' } }] });
+        }
+        throw new Error(`unexpected request ${url}`);
+      }),
+    );
+    const item = await lookupBarcode(ISBN);
+    expect(item?.name).toBe('Found By Google');
+    expect(item?.category).toBe('Book');
+  });
+});

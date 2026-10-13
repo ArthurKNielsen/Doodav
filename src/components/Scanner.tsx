@@ -44,7 +44,12 @@ export function Scanner({ onScanned, aiReady, scanTick }: Props) {
           return;
         } catch (err) {
           if (!(err instanceof ApiError && err.status === 404)) throw err;
-          hint = `a barcode (${code}) was read but is not in the product databases. It may be a non-food product.`;
+          // Without a server AI, a guess from the photo is worse than saying "not found".
+          if (!aiReady) {
+            setPhase({ kind: 'error', message: `Barcode ${code} isn't in the product or book databases yet.` });
+            return;
+          }
+          hint = `a barcode (${code}) was read but is not in the product or book databases. It may be a non-food product.`;
         }
       }
 
