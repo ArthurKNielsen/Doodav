@@ -10,6 +10,43 @@ Point your phone at anything (food, a plant, a gadget, a book, a tool) or a prod
 
 ---
 
+## Quick test (start here)
+
+Two ways to try it. Do the first one, then the second if you want to use your phone.
+
+**A. Test on your PC**
+
+```bash
+npm install
+cp .env.example .env         # Windows: copy .env.example .env
+npm run doctor               # checks what's ready and tells you what's missing
+npm run dev                  # then open http://localhost:5173
+```
+
+Your laptop's webcam works here. Tap **Scan** on a product barcode, or use **Choose a photo instead** on any object (the object scan needs Ollama running, see step 2).
+
+**B. Test on your iPhone (one command)**
+
+1. Install the free tunnel tool once:
+   - macOS: `brew install cloudflared`
+   - Windows: `winget install --id Cloudflare.cloudflared`
+   - Linux: see section 4 below
+2. Run:
+
+   ```bash
+   npm run phone
+   ```
+
+3. A QR code appears in the terminal. Scan it with your iPhone Camera app and open the link in **Safari**.
+4. Optional: Share > Add to Home Screen.
+5. Keep the terminal open while you test. Press **Ctrl+C** to stop.
+
+The link changes every time you run `npm run phone`. If the camera says it's blocked, see section 6.
+
+**What to try first:** scan a food barcode, scan a plant or a gadget, tap "Ask about this", close the app and reopen it to check your history is still there.
+
+---
+
 ## 1. Install
 
 You need **Node.js 20 or newer** (22 recommended).
@@ -152,6 +189,8 @@ Then tunnel port 4173 instead of 5173 (`cloudflared tunnel --url http://localhos
 | `npm run build` | Typecheck and production build |
 | `npm test` | Unit tests for the JSON validator and barcode parser |
 | `npm run typecheck` | TypeScript check only |
+| `npm run phone` | Run everything and print a QR code to open on your iPhone (free HTTPS tunnel) |
+| `npm run doctor` | Check Node, `.env`, Ollama, and cloudflared, and say what to fix |
 | `python3 scripts/make-icons.py` | Regenerate the PWA icons (needs Pillow) |
 
 ## Configuration
