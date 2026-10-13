@@ -37,7 +37,10 @@ export function identify(imageBase64: string, hint?: string): Promise<ScanItem> 
   return post<ScanItem>('/api/identify', { image: imageBase64, hint });
 }
 
+const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? '').replace(/\/$/, '');
+
 export async function lookupBarcode(code: string): Promise<ScanItem> {
+  if (API_BASE) return request<ScanItem>(`${API_BASE}/api/barcode/${encodeURIComponent(code)}`);
   let item: ScanItem | null;
   try {
     item = await lookupProduct(code);

@@ -16,6 +16,23 @@ const PORT = Number(process.env.PORT) || 8787;
 const app = express();
 app.use(express.json({ limit: '8mb' }));
 
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? 'https://arthurknielsen.github.io')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 const provider: LlmProvider = createProvider();
 
 function fail(res: Response, status: number, error: string, code?: string) {
