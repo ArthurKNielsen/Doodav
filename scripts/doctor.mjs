@@ -11,8 +11,11 @@ const fix = (msg) => console.log(`      ${msg}`);
 console.log('\nDoohav checkup\n');
 
 // Node version
-const major = Number(process.versions.node.split('.')[0]);
-major >= 20 ? ok(`Node.js ${process.versions.node}`) : warn(`Node.js ${process.versions.node}. Install Node 20 or newer from nodejs.org.`);
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
+const nodeOk = nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 12);
+nodeOk
+  ? ok(`Node.js ${process.versions.node}`)
+  : warn(`Node.js ${process.versions.node} is too old. Install Node 22 LTS from nodejs.org, then open a new terminal.`);
 
 // .env file
 if (existsSync('.env')) {
