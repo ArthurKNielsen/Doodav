@@ -20,6 +20,7 @@ export default function App() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [openAsk, setOpenAsk] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
+  const [scanTick, setScanTick] = useState(0);
 
   useEffect(() => {
     checkHealth().then(setHealth);
@@ -66,9 +67,12 @@ export default function App() {
   };
 
   const inDetail = openRecord !== null;
+  // The Scan screen is one full-height camera with no page scroll, so it hides the top bar.
+  const onScanScreen = tab === 'scan' && !inDetail;
 
   return (
-    <div className="app">
+    <div className={`app ${onScanScreen ? 'app--scan' : ''}`}>
+      {!onScanScreen && (
       <header className="topbar">
         <div className="brand">
           <Mark size={32} />
@@ -82,6 +86,7 @@ export default function App() {
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={20} />
         </button>
       </header>
+      )}
 
       <main className="main">
         {inDetail ? (
@@ -104,7 +109,7 @@ export default function App() {
         ) : (
           <>
             {tab === 'scan' && (
-              <Scanner onScanned={onScanned} aiReady={aiReady} serverMessage={serverMessage} />
+              <Scanner onScanned={onScanned} aiReady={aiReady} scanTick={scanTick} />
             )}
             {tab === 'history' && (
               <HistoryList records={records} onOpen={(id) => openScan(id)} onClearAll={() => setRecords([])} />
@@ -140,7 +145,7 @@ export default function App() {
             className="tabbar__scan"
             aria-label="Scan"
             aria-current={!inDetail && tab === 'scan' ? 'page' : undefined}
-            onClick={() => goTab('scan')}
+            onClick={() => (onScanScreen ? setScanTick((t) => t + 1) : goTab('scan'))}
           >
             <Icon name="scan" size={26} />
           </button>

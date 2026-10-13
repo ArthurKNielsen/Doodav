@@ -1164,3 +1164,88 @@ button:focus-visible {
     transition: none;
   }
 }
+
+/* ---------- Scan screen: one full-height camera, no page scroll ---------- */
+
+.app--scan {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app--scan .main {
+  padding: 0;
+  max-width: none;
+  gap: 0;
+  overflow: hidden;
+}
+
+.scan-screen {
+  flex: 1;
+  height: 100dvh;
+  padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 110px);
+  box-sizing: border-box;
+}
+
+.scan-screen .viewfinder {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  border-radius: 28px;
+}
+
+.scan-screen .viewfinder__video {
+  border-radius: 28px;
+}
+
+.photo-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--nav) 80%, transparent);
+  color: var(--nav-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.photo-btn:disabled {
+  opacity: 0.5;
+}
+
+.toast {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 72px;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--error-bg);
+  color: var(--error-ink);
+  font-size: 0.92rem;
+  box-shadow: var(--shadow);
+}
+
+.toast span {
+  flex: 1;
+}
+
+.toast__close {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}

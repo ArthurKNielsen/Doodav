@@ -1,7 +1,7 @@
 // Line icons drawn as SVG paths (stroke-based, so they follow the text colour).
 type IconName =
   | 'home' | 'clock' | 'scan' | 'chat' | 'user' | 'search' | 'back'
-  | 'up' | 'plus' | 'right' | 'sun' | 'moon' | 'more';
+  | 'up' | 'plus' | 'right' | 'sun' | 'moon' | 'more' | 'image';
 
 /** A full circle as an SVG path, so icons don't need a separate element type. */
 const circle = (cx: number, cy: number, r: number) =>
@@ -21,6 +21,7 @@ const ICONS: Record<IconName, string[]> = {
   sun: [circle(12, 12, 4), 'M12 2v2', 'M12 20v2', 'M4.9 4.9l1.4 1.4', 'M17.7 17.7l1.4 1.4', 'M2 12h2', 'M20 12h2', 'M4.9 19.1l1.4-1.4', 'M17.7 6.3l1.4-1.4'],
   moon: ['M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'],
   more: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'],
+  image: ['M4 4h16v16H4z', 'M4 17l5-5 4 4 3-3 4 4', circle(9, 9, 1.5)],
 };
 
 export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {

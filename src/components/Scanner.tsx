@@ -1,13 +1,12 @@
-// The Scan screen: live viewfinder, mode switch, zoom, and the Scan button.
-// A tap captures a frame. Barcode mode only reads barcodes. Object mode names what's in view.
-import { useRef, useState } from 'react';
+// The Scan screen: one full-height camera panel. The Scan button lives in the bottom bar,
+// which calls back through `scanTick`. Barcode first, then the AI (server or on-device) names it.
+import { useEffect, useRef, useState } from 'react';
 import { ApiError, identify, lookupBarcode } from '../lib/api';
 import { identifyOnDevice } from '../lib/onDevice';
 import { detectBarcode } from '../lib/barcode';
-import { canvasFromFile, canvasToJpegBase64, captureFrame, drawScaled, makeThumbnail } from '../lib/image';
+import { canvasFromFile, canvasToJpegBase64, drawScaled, makeThumbnail } from '../lib/image';
 import { useCamera } from '../lib/useCamera';
 import type { ScanItem } from '../../shared/types';
-import { AiStatus } from './AiStatus';
 import { Icon } from './Icon';
 import { Notice } from './Notice';
 
@@ -15,43 +14,31 @@ interface Props {
   onScanned: (item: ScanItem, thumbnail: string | null) => void;
   /** True when a server AI (Ollama or Gemini) is configured. Otherwise naming runs on the phone. */
   aiReady: boolean;
-  serverMessage: string;
+  /** Increases each time the bottom-bar Scan button is tapped. */
+  scanTick: number;
 }
-
-type Mode = 'barcode' | 'object';
 
 type Phase =
   | { kind: 'idle' }
   | { kind: 'working'; label: string }
   | { kind: 'error'; message: string };
 
-const MODES: Array<{ id: Mode | 'label'; label: string; soon?: boolean }> = [
-  { id: 'barcode', label: 'Barcode' },
-  { id: 'label', label: 'Label', soon: true },
-  { id: 'object', label: 'Object' },
-];
-
-export function Scanner({ onScanned, aiReady, serverMessage }: Props) {
+export function Scanner({ onScanned, aiReady, scanTick }: Props) {
   // Mounted only on the Scan screen, so the camera stops when you leave it.
   const camera = useCamera(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
-  const [mode, setMode] = useState<Mode>('barcode');
-  const [zoom, setZoom] = useState(1);
   const busy = phase.kind === 'working';
+  const ready = camera.status === 'ready';
 
-  /** Runs the pipeline on one frame. Barcode mode stops at the barcode. Object mode names the object. */
+  /** Barcode first. If there's no product barcode, the AI names the object in the photo. */
   async function scanCanvas(canvas: HTMLCanvasElement) {
     const thumbnail = makeThumbnail(canvas);
     try {
       let hint: string | undefined;
-      if (mode === 'barcode') {
-        setPhase({ kind: 'working', label: 'Reading barcode…' });
-        const code = await detectBarcode(canvas);
-        if (!code) {
-          setPhase({ kind: 'error', message: 'No barcode found. Hold it steady, fill the frame, and try again.' });
-          return;
-        }
+      setPhase({ kind: 'working', label: 'Reading barcode…' });
+      const code = await detectBarcode(canvas);
+      if (code) {
         setPhase({ kind: 'working', label: 'Looking up product…' });
         try {
           const item = await lookupBarcode(code);
@@ -60,8 +47,7 @@ export function Scanner({ onScanned, aiReady, serverMessage }: Props) {
           return;
         } catch (err) {
           if (!(err instanceof ApiError && err.status === 404)) throw err;
-          setPhase({ kind: 'error', message: `Barcode ${code} isn't in the product databases. Try Object mode to name it from the photo.` });
-          return;
+          hint = `a barcode (${code}) was read but is not in the product databases. It may be a non-food product.`;
         }
       }
 
@@ -80,20 +66,26 @@ export function Scanner({ onScanned, aiReady, serverMessage }: Props) {
   }
 
   function onScanTap() {
+    if (busy) return;
     const video = camera.videoRef.current;
     if (!video || video.videoWidth === 0) {
       setPhase({ kind: 'error', message: 'The camera is still starting. Try again in a second.' });
       return;
     }
-    scanCanvas(captureFrame(video, zoom));
+    scanCanvas(drawScaled(video, video.videoWidth, video.videoHeight));
   }
+
+  // The bottom-bar button bumps scanTick. Skip the first render, when it's still 0.
+  useEffect(() => {
+    if (scanTick > 0) onScanTap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanTick]);
 
   async function onFilePicked(file: File | undefined) {
     if (!file) return;
     setPhase({ kind: 'working', label: 'Loading photo…' });
     try {
-      const canvas = await canvasFromFile(file);
-      await scanCanvas(canvas);
+      await scanCanvas(await canvasFromFile(file));
     } catch (err) {
       setPhase({ kind: 'error', message: err instanceof Error ? err.message : "Couldn't open that photo." });
     } finally {
@@ -102,25 +94,10 @@ export function Scanner({ onScanned, aiReady, serverMessage }: Props) {
     }
   }
 
-  const ready = camera.status === 'ready';
-
   return (
-    <section className="scanner" aria-label="Camera">
-      <div className="scanner__head">
-        <p className="eyebrow">Point, then tap Scan</p>
-        <h2 className="screen-title">Scan something</h2>
-      </div>
-
+    <section className="scan-screen" aria-label="Camera">
       <div className="viewfinder">
-        <div className="viewfinder__dots" aria-hidden="true" />
-        <video
-          ref={camera.videoRef}
-          className="viewfinder__video"
-          playsInline
-          muted
-          autoPlay
-          style={{ transform: `scale(${zoom})` }}
-        />
+        <video ref={camera.videoRef} className="viewfinder__video" playsInline muted autoPlay />
         <span className="corner corner--tl" aria-hidden="true" />
         <span className="corner corner--tr" aria-hidden="true" />
         <span className="corner corner--bl" aria-hidden="true" />
@@ -146,75 +123,35 @@ export function Scanner({ onScanned, aiReady, serverMessage }: Props) {
           </div>
         )}
 
+        {phase.kind === 'error' && (
+          <div className="toast" role="alert">
+            <span>{phase.message}</span>
+            <button className="toast__close" onClick={() => setPhase({ kind: 'idle' })} aria-label="Dismiss">
+              ×
+            </button>
+          </div>
+        )}
+
+        <button
+          className="photo-btn"
+          onClick={() => fileInput.current?.click()}
+          disabled={busy}
+          aria-label="Choose a photo instead"
+        >
+          <Icon name="image" size={20} />
+        </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => onFilePicked(e.target.files?.[0])}
+        />
+
         <div className="viewfinder__pill">
           <span className={`dot ${ready ? 'dot--ok' : ''}`} aria-hidden="true" />
-          {ready ? (busy ? 'Working' : 'Ready · Hold steady') : 'Camera off'}
+          {busy ? 'Working' : ready ? 'Point at it, then tap Scan' : 'Camera off'}
         </div>
-      </div>
-
-      <div className="card zoom">
-        <div className="zoom__row">
-          <span>Zoom</span>
-          <span className="mono accent">{zoom.toFixed(1)}×</span>
-        </div>
-        <input
-          className="zoom__slider"
-          type="range"
-          min={1}
-          max={5}
-          step={0.1}
-          value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))}
-          aria-label="Zoom"
-        />
-        <div className="zoom__scale mono muted">
-          <span>1×</span>
-          <span>3×</span>
-          <span>5×</span>
-        </div>
-      </div>
-
-      <div className="segmented" role="group" aria-label="Scan mode">
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            className="segmented__item"
-            aria-pressed={m.id === mode}
-            disabled={m.soon || busy}
-            title={m.soon ? 'Coming soon' : undefined}
-            onClick={() => !m.soon && m.id !== 'label' && setMode(m.id)}
-          >
-            {m.label}
-            {m.soon && <span className="soon">soon</span>}
-          </button>
-        ))}
-      </div>
-
-      {phase.kind === 'error' && (
-        <Notice tone="error" title="Couldn't scan that">
-          {phase.message}
-        </Notice>
-      )}
-
-      <button className="btn btn--primary btn--xl" onClick={onScanTap} disabled={busy || !ready}>
-        <Icon name="scan" size={22} />
-        {busy ? 'Working…' : 'Scan'}
-      </button>
-
-      <button className="btn btn--ghost" onClick={() => fileInput.current?.click()} disabled={busy}>
-        Choose a photo instead
-      </button>
-      <input
-        ref={fileInput}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={(e) => onFilePicked(e.target.files?.[0])}
-      />
-
-      <div className="card card--compact">
-        <AiStatus aiReady={aiReady} serverMessage={serverMessage} />
-        {!aiReady && <p className="muted small">Barcodes always work. Object naming runs on this device.</p>}
       </div>
     </section>
   );
