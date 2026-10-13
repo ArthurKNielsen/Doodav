@@ -26,9 +26,22 @@ function describeError(err: unknown): string {
   return String(err).slice(0, 200);
 }
 
+/**
+ * Asks the browser not to clear this site's storage (where the model lives) when space runs low.
+ * Browsers may still refuse, and iOS support varies, so this is best-effort.
+ */
+async function requestPersistentStorage(): Promise<boolean> {
+  try {
+    return (await navigator.storage?.persist?.()) ?? false;
+  } catch {
+    return false;
+  }
+}
+
 /** Loads the library and model once, timing the load. Retries on the next scan if it fails. */
 function loadClassifier(): Promise<Classifier> {
   if (!classifierPromise) {
+    void requestPersistentStorage();
     const startedAt = Date.now();
     patchOnDeviceStatus({ state: 'loading', progress: 0, startedAt, loadMs: null, message: null });
     classifierPromise = (async () => {
