@@ -1,4 +1,3 @@
-// A rounded message box for errors, warnings, and info.
 import type { ReactNode } from 'react';
 
 interface Props {

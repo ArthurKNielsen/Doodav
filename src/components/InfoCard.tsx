@@ -1,5 +1,3 @@
-// The Result screen: product hero, key facts, care and safety, and the Ask entry point.
-// Only sections with real data are shown, so nothing is filled in with guesses.
 import { useState, type ReactNode } from 'react';
 import type { PriceInfo, ScanItem } from '../../shared/types';
 import type { ScanRecord } from '../lib/history';
@@ -11,11 +9,9 @@ interface Props {
   record: ScanRecord;
   onTurns: (id: string, turns: ScanRecord['followUps']) => void;
   onDelete: (id: string) => void;
-  /** Open the Ask chat straight away (used by the Ask tab). */
   startAsking?: boolean;
 }
 
-/** "$20 – $45" for ranges, "$20" for a single number, or null if there's no price. */
 export function formatPrice(price: PriceInfo): string | null {
   const { low, high, currency } = price;
   if (low === null && high === null) return null;
@@ -24,7 +20,6 @@ export function formatPrice(price: PriceInfo): string | null {
       try {
         return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 }).format(n);
       } catch {
-        // Unknown currency code: fall through to the plain format.
       }
     }
     return `${n}${currency ? ` ${currency}` : ''}`;
@@ -152,7 +147,7 @@ export function InfoCard({ record, onTurns, onDelete, startAsking = false }: Pro
 
       {!askOpen ? (
         <button className="btn btn--primary btn--xl" onClick={() => setAskOpen(true)}>
-          Ask Doohav about this
+          Ask Doodav about this
           <Icon name="right" size={20} />
         </button>
       ) : (

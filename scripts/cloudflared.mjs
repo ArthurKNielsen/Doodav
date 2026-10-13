@@ -1,5 +1,3 @@
-// Finds the cloudflared program, even when it isn't on PATH.
-// winget on Windows often installs it without updating PATH, and editing a long PATH is painful.
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -7,7 +5,6 @@ import { join } from 'node:path';
 
 const isWindows = process.platform === 'win32';
 
-/** Where cloudflared might be: the CLOUDFLARED_PATH override, the PATH, then the usual install folders. */
 export function cloudflaredCandidates() {
   const list = [];
   if (process.env.CLOUDFLARED_PATH) list.push(process.env.CLOUDFLARED_PATH);
@@ -27,7 +24,6 @@ export function cloudflaredCandidates() {
   return list;
 }
 
-/** The first working cloudflared command, or null. */
 export function findCloudflared() {
   for (const cmd of cloudflaredCandidates()) {
     if (cmd !== 'cloudflared' && !existsSync(cmd)) continue;

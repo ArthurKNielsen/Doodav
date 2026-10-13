@@ -1,6 +1,3 @@
-// Google Gemini API. The free tier needs no billing: create a key at
-// https://aistudio.google.com/apikey and put it in GEMINI_API_KEY.
-// Free-tier limits apply (requests per minute and per day); the app shows a friendly message if you hit them.
 import { LlmError, type LlmProvider, type LlmRequest } from './types.js';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -27,7 +24,6 @@ export function createGemini(env: NodeJS.ProcessEnv = process.env): LlmProvider 
           ],
         })),
         generationConfig: {
-          // Gemini 2.5 models spend part of this budget on internal reasoning, so keep it roomy.
           maxOutputTokens: Math.max(req.maxTokens, 2048),
           temperature: 0.2,
           ...(req.json ? { responseMimeType: 'application/json' } : {}),

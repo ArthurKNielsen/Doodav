@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// Checks what's ready for a test run and tells you what to fix. Run: npm run doctor
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { findCloudflared } from './cloudflared.mjs';
@@ -9,23 +8,20 @@ const ok = (msg) => console.log(`  \x1b[32m✔\x1b[0m ${msg}`);
 const warn = (msg) => console.log(`  \x1b[33m!\x1b[0m ${msg}`);
 const fix = (msg) => console.log(`      ${msg}`);
 
-console.log('\nDoohav checkup\n');
+console.log('\nDoodav checkup\n');
 
-// Node version
 const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
 const nodeOk = nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 12);
 nodeOk
   ? ok(`Node.js ${process.versions.node}`)
   : warn(`Node.js ${process.versions.node} is too old. Install Node 22 LTS from nodejs.org, then open a new terminal.`);
 
-// .env file
 if (existsSync('.env')) {
   ok('.env file found');
 } else {
   warn('No .env file yet. Run: cp .env.example .env   (Windows: copy .env.example .env)');
 }
 
-// Which AI provider is selected
 const env = existsSync('.env') ? readFileSync('.env', 'utf8') : '';
 const provider = (env.match(/^AI_PROVIDER=(.*)$/m)?.[1] ?? 'ollama').trim().toLowerCase() || 'ollama';
 const model = (env.match(/^OLLAMA_MODEL=(.*)$/m)?.[1] ?? 'qwen2.5vl:7b').trim() || 'qwen2.5vl:7b';
@@ -52,7 +48,6 @@ if (provider === 'gemini') {
   }
 }
 
-// Cloudflare tunnel for the phone
 if (findCloudflared()) {
   ok('cloudflared installed (phone camera will work through the tunnel)');
 } else {

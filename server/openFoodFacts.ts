@@ -1,30 +1,23 @@
-// Product barcode lookups for the Open*Facts family of free databases (no API key).
-// They all share one API shape, so one parser serves them all.
 import type { AllergenInfo, KeyFact, ScanItem } from '../shared/types.js';
 
 export interface ProductDatabase {
   label: string;
   baseUrl: string;
-  /** Food databases carry nutrition and allergen data. The others don't. */
   isFood: boolean;
 }
 
-/** Searched in order. The first match wins. */
 export const PRODUCT_DATABASES: ProductDatabase[] = [
   { label: 'Open Food Facts', baseUrl: 'https://world.openfoodfacts.org/api/v2/product', isFood: true },
   { label: 'Open Products Facts', baseUrl: 'https://world.openproductsfacts.org/api/v2/product', isFood: false },
   { label: 'Open Beauty Facts', baseUrl: 'https://world.openbeautyfacts.org/api/v2/product', isFood: false },
 ];
 
-// These databases ask API users to identify their app in the User-Agent.
-export const USER_AGENT = 'Doohav/0.1 (personal project)';
+export const USER_AGENT = 'Doodav/0.1 (personal project)';
 
-/** EAN-8, UPC-A, EAN-13, and GTIN-14 are all 8 to 14 digits. */
 export function isValidBarcode(code: string): boolean {
   return /^\d{8,14}$/.test(code);
 }
 
-/** "en:oat-milk" -> "Oat milk". */
 function prettyTag(tag: string): string {
   const bare = tag.replace(/^[a-z]{2}:/, '').replace(/-/g, ' ').trim();
   return bare.charAt(0).toUpperCase() + bare.slice(1);
@@ -41,19 +34,12 @@ function text(v: unknown): string | null {
   return t.length > 0 ? t : null;
 }
 
-/** Formats a per-100g nutriment, or returns null if it is missing. */
 function nutrient(n: Record<string, unknown>, key: string, unit: string, label: string): KeyFact | null {
   const v = n[key];
   if (typeof v !== 'number' || !Number.isFinite(v)) return null;
   return { label, value: `${Math.round(v * 10) / 10} ${unit} per 100 g` };
 }
 
-/**
- * Turns an Open*Facts API response into a ScanItem.
- * Returns null when the product is not in the database (status !== 1).
- * Only fields the database actually has are filled in; nothing is guessed.
- * These databases have no price data, so price and whereToBuy stay empty.
- */
 export function parseOpenFoodFactsResponse(json: unknown, db: ProductDatabase = PRODUCT_DATABASES[0]): ScanItem | null {
   if (typeof json !== 'object' || json === null) return null;
   const body = json as Record<string, unknown>;
@@ -65,8 +51,6 @@ export function parseOpenFoodFactsResponse(json: unknown, db: ProductDatabase = 
   const name = text(product.product_name) ?? text(product.product_name_en) ?? 'Unknown product';
   const brand = text(product.brands);
   const quantity = text(product.quantity);
-  // Open Food Facts lists categories as "Beverages, Plant-based, Oat drinks".
-  // The first one is the broadest, so it is the most useful category label.
   const category = text(product.categories)?.split(',')[0]?.trim() ?? null;
 
   const keyFacts: KeyFact[] = [];

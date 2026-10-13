@@ -9,12 +9,9 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// Offline app-shell caching only in production builds. In dev, a cached
-// shell would hide your edits.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Caching is an extra; the app works without it.
     });
   });
 }

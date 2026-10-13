@@ -1,14 +1,10 @@
-// Book lookups by ISBN-13 (the barcode on the back of a book) via Open Library.
-// Free, no API key. https://openlibrary.org/developers/api
 import type { KeyFact, ScanItem } from '../shared/types.js';
 import { USER_AGENT } from './openFoodFacts.js';
 
-/** ISBN-13s start with 978 or 979. */
 export function isIsbn13(code: string): boolean {
   return /^97[89]\d{10}$/.test(code);
 }
 
-/** Turns an Open Library "data" response into a ScanItem. Returns null if the ISBN is unknown. */
 export function parseOpenLibraryResponse(json: unknown, isbn: string): ScanItem | null {
   if (typeof json !== 'object' || json === null) return null;
   const book = (json as Record<string, unknown>)[`ISBN:${isbn}`];

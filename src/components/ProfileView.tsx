@@ -1,4 +1,3 @@
-// Profile: appearance, the AI status and load time, and data controls.
 import { useState } from 'react';
 import { AiStatus } from './AiStatus';
 import { Icon } from './Icon';
@@ -67,7 +66,7 @@ export function ProfileView({ theme, onToggleTheme, aiReady, serverMessage, save
         )}
       </div>
 
-      <p className="muted small center">Doohav · scans stay on this device.</p>
+      <p className="muted small center">Doodav · scans stay on this device.</p>
     </section>
   );
 }

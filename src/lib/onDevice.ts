@@ -1,10 +1,7 @@
-// On-device naming. Runs a small image classifier in the phone's browser, so it
-// needs no API key and no server. The first use downloads the model, then the browser caches it.
 import { buildOnDeviceItem, prettyLabel, type Prediction, type WikiSummary } from '../../shared/onDevice';
 import type { ScanItem } from '../../shared/types';
 import { getOnDeviceStatus, patchOnDeviceStatus } from './aiStatus';
 
-// ImageNet classifier (1000 everyday object classes) with 8-bit weights to keep the download small.
 const MODEL_ID = 'Xenova/vit-base-patch16-224';
 
 interface ClassifierLibrary {
@@ -20,16 +17,11 @@ interface ProgressEvent {
 
 let classifierPromise: Promise<Classifier> | null = null;
 
-/** A short, readable description of an error for the status line. */
 function describeError(err: unknown): string {
   if (err instanceof Error) return `${err.name}: ${err.message}`.slice(0, 200);
   return String(err).slice(0, 200);
 }
 
-/**
- * Asks the browser not to clear this site's storage (where the model lives) when space runs low.
- * Browsers may still refuse, and iOS support varies, so this is best-effort.
- */
 async function requestPersistentStorage(): Promise<boolean> {
   try {
     return (await navigator.storage?.persist?.()) ?? false;
@@ -38,14 +30,12 @@ async function requestPersistentStorage(): Promise<boolean> {
   }
 }
 
-/** Loads the library and model once, timing the load. Retries on the next scan if it fails. */
 function loadClassifier(): Promise<Classifier> {
   if (!classifierPromise) {
     void requestPersistentStorage();
     const startedAt = Date.now();
     patchOnDeviceStatus({ state: 'loading', progress: 0, startedAt, loadMs: null, message: null });
     classifierPromise = (async () => {
-      // Bundled by Vite and split into its own file, so it downloads only when a scan first needs it.
       const lib = (await import('@huggingface/transformers')) as unknown as ClassifierLibrary;
       lib.env.allowLocalModels = false;
       return lib.pipeline('image-classification', MODEL_ID, {
@@ -63,7 +53,6 @@ function loadClassifier(): Promise<Classifier> {
       })
       .catch((err: unknown) => {
         classifierPromise = null;
-        // Keep the real cause, so the screen can say what actually failed.
         const detail = describeError(err);
         console.error('[on-device] model failed to load:', err);
         patchOnDeviceStatus({
@@ -77,7 +66,6 @@ function loadClassifier(): Promise<Classifier> {
   return classifierPromise;
 }
 
-/** Starts loading the model in the background, so the first scan is quick. Safe to call repeatedly. */
 export function preloadOnDevice(): Promise<void> {
   return loadClassifier().then(
     () => undefined,
@@ -85,7 +73,6 @@ export function preloadOnDevice(): Promise<void> {
   );
 }
 
-/** Wikipedia's free summary API (no key). Returns null for unknown or ambiguous titles. */
 export async function fetchWikiSummary(title: string): Promise<WikiSummary | null> {
   const slug = encodeURIComponent(title.replace(/ /g, '_'));
   try {
@@ -99,7 +86,6 @@ export async function fetchWikiSummary(title: string): Promise<WikiSummary | nul
       extract?: string;
       content_urls?: { desktop?: { page?: string } };
     };
-    // "disambiguation" pages would describe the wrong thing, so skip them.
     if (data.type !== 'standard' || !data.extract) return null;
     return {
       title: data.title ?? title,
@@ -111,10 +97,6 @@ export async function fetchWikiSummary(title: string): Promise<WikiSummary | nul
   }
 }
 
-/**
- * Names the object in a canvas on the device. `onStatus` gets short messages for the
- * scan screen. Load and scan timings go to the shared status store.
- */
 export async function identifyOnDevice(
   canvas: HTMLCanvasElement,
   onStatus: (message: string) => void,

@@ -1,9 +1,7 @@
-// Line icons drawn as SVG paths (stroke-based, so they follow the text colour).
 type IconName =
   | 'home' | 'clock' | 'scan' | 'chat' | 'user' | 'search' | 'back'
   | 'up' | 'plus' | 'right' | 'sun' | 'moon' | 'more' | 'image';
 
-/** A full circle as an SVG path, so icons don't need a separate element type. */
 const circle = (cx: number, cy: number, r: number) =>
   `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
 
@@ -45,7 +43,6 @@ export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   );
 }
 
-/** The app mark: a rounded square with scan corners. */
 export function Mark({ size = 36 }: { size?: number }) {
   return (
     <span className="mark" style={{ width: size, height: size }} aria-hidden="true">

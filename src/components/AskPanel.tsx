@@ -1,4 +1,3 @@
-// The Ask chat about one scanned item. Each question is one AI call (server or on-device info only, see App).
 import { useState } from 'react';
 import { ask } from '../lib/api';
 import type { AskTurn, ScanItem } from '../../shared/types';
@@ -31,7 +30,6 @@ export function AskPanel({ item, turns, onTurns }: Props) {
       const answer = await ask(item, question, turns);
       onTurns([...withQuestion, { role: 'assistant', content: answer }]);
     } catch (err) {
-      // Roll back so the question is not stuck in the history without an answer.
       onTurns(turns);
       setDraft(question);
       setError(err instanceof Error ? err.message : 'Could not get an answer. Try again.');
@@ -47,7 +45,7 @@ export function AskPanel({ item, turns, onTurns }: Props) {
           <Icon name="scan" size={16} />
         </span>
         <div>
-          <strong>Ask Doohav</strong>
+          <strong>Ask Doodav</strong>
           <p className="muted small">Context from this scan: {item.name}</p>
         </div>
       </header>
@@ -76,7 +74,7 @@ export function AskPanel({ item, turns, onTurns }: Props) {
                 <i />
                 <i />
               </span>
-              Doohav is typing
+              Doodav is typing
             </li>
           )}
         </ul>

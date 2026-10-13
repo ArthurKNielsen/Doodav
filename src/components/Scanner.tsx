@@ -1,12 +1,9 @@
-// The Scan screen: one full-height camera panel. The Scan button lives in the bottom bar,
-// which calls back through `scanTick`. Barcode first, then the AI (server or on-device) names it.
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, identify, lookupBarcode } from '../lib/api';
 import { identifyOnDevice } from '../lib/onDevice';
 import { detectBarcode } from '../lib/barcode';
 import { canvasFromFile, canvasToJpegBase64, drawScaled, makeThumbnail, MAX_SIDE } from '../lib/image';
 
-/** Barcodes need detail. Read them from a larger frame than the AI gets. */
 const BARCODE_SIDE = 1920;
 import { useCamera } from '../lib/useCamera';
 import type { ScanItem } from '../../shared/types';
@@ -15,9 +12,7 @@ import { Notice } from './Notice';
 
 interface Props {
   onScanned: (item: ScanItem, thumbnail: string | null) => void;
-  /** True when a server AI (Ollama or Gemini) is configured. Otherwise naming runs on the phone. */
   aiReady: boolean;
-  /** Increases each time the bottom-bar Scan button is tapped. */
   scanTick: number;
 }
 
@@ -27,14 +22,12 @@ type Phase =
   | { kind: 'error'; message: string };
 
 export function Scanner({ onScanned, aiReady, scanTick }: Props) {
-  // Mounted only on the Scan screen, so the camera stops when you leave it.
   const camera = useCamera(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const busy = phase.kind === 'working';
   const ready = camera.status === 'ready';
 
-  /** Barcode first (from the full frame). If there's no product barcode, the AI names the object. */
   async function scanCanvas(frame: HTMLCanvasElement) {
     const small = drawScaled(frame, frame.width, frame.height, MAX_SIDE);
     const thumbnail = makeThumbnail(small);
@@ -79,10 +72,8 @@ export function Scanner({ onScanned, aiReady, scanTick }: Props) {
     scanCanvas(drawScaled(video, video.videoWidth, video.videoHeight, BARCODE_SIDE));
   }
 
-  // The bottom-bar button bumps scanTick. Skip the first render, when it's still 0.
   useEffect(() => {
     if (scanTick > 0) onScanTap();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanTick]);
 
   async function onFilePicked(file: File | undefined) {
@@ -93,7 +84,6 @@ export function Scanner({ onScanned, aiReady, scanTick }: Props) {
     } catch (err) {
       setPhase({ kind: 'error', message: err instanceof Error ? err.message : "Couldn't open that photo." });
     } finally {
-      // Clear the input so picking the same photo again still fires onChange.
       if (fileInput.current) fileInput.current.value = '';
     }
   }

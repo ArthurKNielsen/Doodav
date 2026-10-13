@@ -1,4 +1,3 @@
-// App shell: header, the five-slot bottom nav (Home, History, Scan, Ask, Profile), and each screen.
 import { useEffect, useState } from 'react';
 import { checkHealth, type Health } from './lib/api';
 import { loadHistory, MAX_RECORDS, newRecordId, saveHistory, type ScanRecord } from './lib/history';
@@ -60,14 +59,12 @@ export default function App() {
     setOpenId(null);
   }
 
-  // Ask opens the newest scan's chat, so it's useful even before you pick a scan.
   const askLatest = () => {
     if (records[0]) openScan(records[0].id, true);
     else goTab('scan');
   };
 
   const inDetail = openRecord !== null;
-  // The Scan screen is one full-height camera with no page scroll, so it hides the top bar.
   const onScanScreen = tab === 'scan' && !inDetail;
 
   return (
@@ -76,7 +73,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <Mark size={32} />
-          <span>Doohav</span>
+          <span>Doodav</span>
         </div>
         <button
           className="round-btn"
@@ -95,7 +92,7 @@ export default function App() {
               <button className="round-btn" onClick={() => setOpenId(null)} aria-label="Back">
                 <Icon name="back" size={20} />
               </button>
-              <span className="detail-bar__title">{openAsk ? 'Ask Doohav' : 'Product'}</span>
+              <span className="detail-bar__title">{openAsk ? 'Ask Doodav' : 'Product'}</span>
               <span className="round-btn round-btn--ghost" aria-hidden="true" />
             </div>
             <InfoCard

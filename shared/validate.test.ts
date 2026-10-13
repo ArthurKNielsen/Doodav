@@ -25,7 +25,6 @@ describe('validateIdentification', () => {
     if (!r.ok) return;
     expect(r.value.name).toBe('Monstera deliciosa');
     expect(r.value.price).toEqual({ low: 20, high: 45, currency: 'USD', estimated: true, note: 'estimated' });
-    // Non-food items never get allergen notes, even if the model adds them.
     expect(r.value.allergens).toBeNull();
     expect(r.value.source).toBe('vision');
   });

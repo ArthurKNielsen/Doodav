@@ -1,10 +1,8 @@
-// Shows whether the AI is ready, and how long loading took (or how far along it is).
 import { useEffect, useState } from 'react';
 import { preloadOnDevice } from '../lib/onDevice';
 import { useOnDeviceStatus } from '../lib/aiStatus';
 import { formatDuration } from '../../shared/format';
 
-/** Re-renders every 200 ms while `active`, so a live timer can count up. */
 function useNow(active: boolean): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -16,13 +14,11 @@ function useNow(active: boolean): number {
 }
 
 interface Props {
-  /** True when a server AI (Ollama or Gemini) is configured. */
   aiReady: boolean;
   serverMessage: string;
   compact?: boolean;
 }
 
-/** One line of status plus, when relevant, a "load now" button. */
 export function AiStatus({ aiReady, serverMessage, compact = false }: Props) {
   const status = useOnDeviceStatus();
   const loading = !aiReady && status.state === 'loading';

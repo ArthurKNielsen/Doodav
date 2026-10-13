@@ -1,8 +1,3 @@
-// Doohav API server. Keeps AI keys on the server and exposes these routes:
-//   GET  /api/health          -> is the server up, and is the AI provider ready?
-//   POST /api/identify        -> photo (base64 JPEG) -> validated info card
-//   GET  /api/barcode/:code   -> Open Food Facts lookup -> info card (404 if unknown)
-//   POST /api/ask             -> follow-up question about a card -> plain-text answer
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -12,26 +7,21 @@ import { isValidBarcode } from './openFoodFacts.js';
 import { lookupBarcode } from './barcode.js';
 import type { AskTurn, ScanItem } from '../shared/types.js';
 
-// Load .env if it exists (Node 22 built-in; no dotenv dependency needed).
 try {
   process.loadEnvFile();
 } catch {
-  // No .env file is fine if the variables are set some other way.
 }
 
 const PORT = Number(process.env.PORT) || 8787;
 const app = express();
-// A full-size JPEG from a phone is well under this. The limit is only a safety net.
 app.use(express.json({ limit: '8mb' }));
 
 const provider: LlmProvider = createProvider();
 
-/** Sends a consistent JSON error body. */
 function fail(res: Response, status: number, error: string, code?: string) {
   res.status(status).json({ error, code });
 }
 
-/** Maps provider errors to their friendly status and message. Anything unexpected becomes a generic 502. */
 function handleAiError(res: Response, err: unknown) {
   if (err instanceof LlmError) {
     if (err.status >= 500) console.error(`[ai] ${err.code}: ${err.message}`);
@@ -48,7 +38,6 @@ app.get('/api/health', async (_req, res) => {
 
 app.post('/api/identify', async (req: Request, res: Response) => {
   const { image, hint } = req.body ?? {};
-  // Expect raw base64 (no "data:" prefix) from the client's JPEG encoder.
   if (typeof image !== 'string' || image.length === 0) {
     return fail(res, 400, 'Missing image.', 'bad_request');
   }
@@ -91,7 +80,6 @@ app.post('/api/ask', async (req: Request, res: Response) => {
   if (typeof question !== 'string' || question.trim().length === 0 || question.length > 1000) {
     return fail(res, 400, 'Question must be 1 to 1000 characters.', 'bad_request');
   }
-  // Only keep well-formed prior turns, and cap how many we send.
   const turns: AskTurn[] = Array.isArray(history)
     ? history
         .filter((t): t is AskTurn => (t?.role === 'user' || t?.role === 'assistant') && typeof t?.content === 'string')
@@ -106,12 +94,9 @@ app.post('/api/ask', async (req: Request, res: Response) => {
   }
 });
 
-// Serve the built web app when it exists (npm run build). This lets one server host
-// both the app and the API, which is how the hosted version runs. In dev, Vite serves the app instead.
 const distDir = fileURLToPath(new URL('../dist', import.meta.url));
 if (existsSync(distDir)) {
   app.use(express.static(distDir));
-  // Client-side fallback: any page request that isn't an API call gets the app shell.
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET' && !req.path.startsWith('/api/')) {
       return res.sendFile('index.html', { root: distDir });
@@ -120,7 +105,6 @@ if (existsSync(distDir)) {
   });
 }
 
-// Last-resort handler, e.g. malformed JSON in the request body.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const type = typeof err === 'object' && err !== null && 'type' in err ? (err as { type: string }).type : '';
   if (type === 'entity.parse.failed') return fail(res, 400, 'Malformed request body.', 'bad_request');
@@ -130,5 +114,5 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Doohav API listening on http://localhost:${PORT} (AI: ${provider.name})`);
+  console.log(`Doodav API listening on http://localhost:${PORT} (AI: ${provider.name})`);
 });

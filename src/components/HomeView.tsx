@@ -1,4 +1,3 @@
-// Home: the AI status at a glance, a Scan call to action, and the latest scans.
 import type { ScanRecord } from '../lib/history';
 import { AiStatus } from './AiStatus';
 import { Icon } from './Icon';

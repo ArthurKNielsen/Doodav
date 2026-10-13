@@ -1,4 +1,3 @@
-// Picks the AI provider from AI_PROVIDER in .env. Ollama is the default: free and local.
 import { createGemini } from './gemini.js';
 import { createOllama } from './ollama.js';
 import type { LlmProvider } from './types.js';

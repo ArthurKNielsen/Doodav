@@ -1,4 +1,3 @@
-// Finds a product for a barcode by trying free databases in order. No AI, no key.
 import type { ScanItem } from '../shared/types.js';
 import { isValidBarcode, PRODUCT_DATABASES, parseOpenFoodFactsResponse, USER_AGENT } from './openFoodFacts.js';
 import { isIsbn13, lookupBook } from './openLibrary.js';
@@ -12,11 +11,6 @@ async function lookupProduct(baseUrl: string, code: string, db: (typeof PRODUCT_
   return parseOpenFoodFactsResponse(await res.json(), db);
 }
 
-/**
- * Returns the product for a barcode, or null if no database knows it.
- * Throws only when every database failed (for example, no internet), so the
- * route can say the lookup is down rather than "not found".
- */
 export async function lookupBarcode(code: string): Promise<ScanItem | null> {
   if (!isValidBarcode(code)) return null;
   const errors: unknown[] = [];

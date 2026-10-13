@@ -1,5 +1,4 @@
-/* Doohav styles: a light lavender look with white cards, an indigo accent, and a dark floating nav.
-   Colours are tokens on :root. Dark mode follows the system unless the user picks light, or uses the toggle. */
+
 
 :root {
   --bg: #eef0fa;
@@ -104,8 +103,6 @@ code,
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* ---------- Layout ---------- */
-
 .app {
   min-height: 100dvh;
   display: flex;
@@ -161,7 +158,6 @@ code,
   gap: 16px;
 }
 
-/* Floating dark nav with a raised centre Scan button, like the design. */
 .tabbar {
   position: fixed;
   left: 0;
@@ -227,8 +223,6 @@ code,
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent), 0 10px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* ---------- Typography ---------- */
-
 .screen-title {
   margin: 4px 0 0;
   font-size: 2rem;
@@ -279,8 +273,6 @@ code,
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-
-/* ---------- Surfaces ---------- */
 
 .card {
   background: var(--surface);
@@ -338,8 +330,6 @@ code,
 .detail-bar__title {
   font-weight: 650;
 }
-
-/* ---------- Controls ---------- */
 
 .btn {
   display: inline-flex;
@@ -430,7 +420,7 @@ code,
   color: var(--ink);
   box-shadow: var(--shadow);
   font: inherit;
-  font-size: 16px; /* 16px or larger stops iOS Safari zooming in on focus */
+  font-size: 16px; 
 }
 
 .input:focus {
@@ -518,8 +508,6 @@ button:focus-visible {
   color: var(--accent);
 }
 
-/* ---------- Notices ---------- */
-
 .notice {
   display: grid;
   gap: 4px;
@@ -551,8 +539,6 @@ button:focus-visible {
 .empty p {
   margin: 4px 0;
 }
-
-/* ---------- Scan screen ---------- */
 
 .scanner {
   display: flex;
@@ -783,8 +769,6 @@ button:focus-visible {
   color: var(--accent);
 }
 
-/* ---------- Result screen ---------- */
-
 .result {
   display: flex;
   flex-direction: column;
@@ -888,8 +872,6 @@ button:focus-visible {
   font-size: 0.82rem;
   text-align: center;
 }
-
-/* ---------- Ask chat ---------- */
 
 .chat {
   gap: 12px;
@@ -1029,8 +1011,6 @@ button:focus-visible {
   cursor: default;
 }
 
-/* ---------- History and lists ---------- */
-
 .history,
 .home,
 .profile {
@@ -1164,8 +1144,6 @@ button:focus-visible {
     transition: none;
   }
 }
-
-/* ---------- Scan screen: one full-height camera, no page scroll ---------- */
 
 .app--scan {
   height: 100dvh;

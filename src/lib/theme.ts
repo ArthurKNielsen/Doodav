@@ -1,15 +1,13 @@
-// Light/dark theme. Defaults to the system setting, and remembers a manual choice.
 import { useEffect, useState } from 'react';
 
 export type Theme = 'light' | 'dark';
-const KEY = 'doohav.theme';
+const KEY = 'doodav.theme';
 
 function initialTheme(): Theme {
   try {
     const saved = localStorage.getItem(KEY);
     if (saved === 'light' || saved === 'dark') return saved;
   } catch {
-    // Storage blocked: fall through to the system setting.
   }
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
@@ -22,7 +20,6 @@ export function useTheme() {
     try {
       localStorage.setItem(KEY, theme);
     } catch {
-      // Not critical: the choice just won't survive a reload.
     }
   }, [theme]);
 

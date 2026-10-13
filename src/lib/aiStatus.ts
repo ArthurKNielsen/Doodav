@@ -1,18 +1,12 @@
-// Shared status of the on-device AI: loading progress, how long loading took,
-// and how long the last scan took. Components subscribe with useOnDeviceStatus.
 import { useSyncExternalStore } from 'react';
 
 export type OnDeviceState = 'idle' | 'loading' | 'ready' | 'error';
 
 export interface OnDeviceStatus {
   state: OnDeviceState;
-  /** 0-100 while downloading, null when not known. */
   progress: number | null;
-  /** When loading started (ms since epoch), for the live timer. */
   startedAt: number | null;
-  /** Total time the model took to load, once ready. */
   loadMs: number | null;
-  /** How long the most recent on-device scan took. */
   lastScanMs: number | null;
   message: string | null;
 }

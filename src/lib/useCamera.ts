@@ -1,4 +1,3 @@
-// Starts the rear camera and turns camera errors into messages a person can act on.
 import { useEffect, useRef, useState } from 'react';
 
 export type CameraStatus = 'starting' | 'ready' | 'error';
@@ -6,18 +5,16 @@ export type CameraStatus = 'starting' | 'ready' | 'error';
 export interface CameraState {
   status: CameraStatus;
   error: string | null;
-  /** Lets the UI show a specific fix for each failure. */
   errorCode: 'insecure' | 'denied' | 'no-camera' | 'busy' | 'unknown' | null;
 }
 
-/** Maps a getUserMedia failure to a friendly message. */
 export function describeCameraError(err: unknown): Omit<CameraState, 'status'> {
   const name = err instanceof DOMException ? err.name : '';
   if (name === 'NotAllowedError' || name === 'SecurityError') {
     return {
       errorCode: 'denied',
       error:
-        'Camera access is turned off. On iPhone, go to Settings > Safari > Camera and set it to Allow (or Ask). Then fully close and reopen Doohav.',
+        'Camera access is turned off. On iPhone, go to Settings > Safari > Camera and set it to Allow (or Ask). Then fully close and reopen Doodav.',
     };
   }
   if (name === 'NotFoundError' || name === 'OverconstrainedError') {
@@ -29,7 +26,6 @@ export function describeCameraError(err: unknown): Omit<CameraState, 'status'> {
   return { errorCode: 'unknown', error: "The camera couldn't start. You can still pick a photo instead." };
 }
 
-/** Starts the rear camera while `enabled` is true, and stops it when false or on unmount. */
 export function useCamera(enabled: boolean) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<CameraState>({ status: 'starting', error: null, errorCode: null });
@@ -41,7 +37,6 @@ export function useCamera(enabled: boolean) {
 
     (async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
-        // Browsers only expose the camera on secure pages (https or localhost).
         setState({
           status: 'error',
           errorCode: 'insecure',
@@ -50,7 +45,6 @@ export function useCamera(enabled: boolean) {
         return;
       }
       try {
-        // "environment" asks for the rear camera on phones. Laptops fall back to their only camera.
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
           audio: false,

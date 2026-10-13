@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-// One command to run Doohav on your computer AND open it on your phone.
-//   npm run phone
-// It starts the API server and the web app, opens a free HTTPS tunnel with
-// Cloudflare (needed for the iPhone camera), and prints a QR code to scan.
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
@@ -20,14 +16,12 @@ const fail = (msg) => {
   process.exit(1);
 };
 
-// ---- Preflight: catch the common setup problems before starting anything -----
 for (const pkg of ['vite', 'tsx', 'qrcode-terminal']) {
   if (!existsSync(`node_modules/${pkg}`)) {
     fail(`Missing "${pkg}". Run "npm install" in this folder first, then try again.`);
   }
 }
 
-/** Resolves true if nothing is listening on the port. */
 function portFree(port) {
   return new Promise((resolve) => {
     const probe = createServer().once('error', () => resolve(false)).once('listening', () => {
@@ -41,7 +35,7 @@ if (!(await portFree(WEB_PORT))) {
   fail(`Port ${WEB_PORT} is already in use. Close the other "npm run dev" or "npm run phone" window, then try again.`);
 }
 if (!(await portFree(API_PORT))) {
-  fail(`Port ${API_PORT} is already in use. Close the other Doohav server window, then try again.`);
+  fail(`Port ${API_PORT} is already in use. Close the other Doodav server window, then try again.`);
 }
 
 const { default: qrcode } = await import('qrcode-terminal');
@@ -54,18 +48,17 @@ const color = {
   dim: (s) => `\x1b[2m${s}\x1b[0m`,
 };
 
-/** Starts a child process and prefixes its output so you can tell the pieces apart. */
 function start(label, cmd, args, { onLine, shell = isWindows } = {}) {
   const child = spawn(cmd, args, { shell, stdio: ['ignore', 'pipe', 'pipe'] });
   children.push(child);
-  const recent = []; // last lines of output, shown if this process dies
+  const recent = [];
   const handle = (chunk) => {
     for (const line of chunk.toString().split(/\r?\n/)) {
       if (!line.trim()) continue;
       recent.push(line);
       if (recent.length > 25) recent.shift();
       onLine?.(line);
-      if (process.env.DOOHAV_VERBOSE) console.log(color.dim(`[${label}] ${line}`));
+      if (process.env.DOODAV_VERBOSE) console.log(color.dim(`[${label}] ${line}`));
     }
   };
   child.stdout.on('data', handle);
@@ -95,17 +88,15 @@ function lanAddress() {
 function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.log(color.dim('\nStopping Doohav…'));
+  console.log(color.dim('\nStopping Doodav…'));
   for (const c of children) c.kill();
   setTimeout(() => process.exit(0), 300);
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-// ---- 1. API server --------------------------------------------------------
 start('api', 'npx', ['tsx', 'server/index.ts']);
 
-// ---- 2. Web app (proxies /api to the API server) ----------------------------
 let webReady = false;
 start('web', 'npx', ['vite', '--host', '0.0.0.0', '--port', String(WEB_PORT), '--strictPort'], {
   onLine: (line) => {
@@ -116,7 +107,6 @@ start('web', 'npx', ['vite', '--host', '0.0.0.0', '--port', String(WEB_PORT), '-
   },
 });
 
-// ---- 3. Free HTTPS tunnel for the phone -----------------------------------
 function openTunnel() {
   const lan = lanAddress();
   const lanUrl = lan ? `http://${lan}:${WEB_PORT}` : null;
@@ -152,7 +142,7 @@ ${color.bold('Meanwhile, test on your phone over Wi-Fi (no camera, but "Choose a
 
 function announce(url, lanUrl) {
   console.log(`
-${color.green(color.bold('Doohav is running!'))}
+${color.green(color.bold('Doodav is running!'))}
 
 ${color.bold('On your iPhone:')} scan this QR code with the Camera app and open the link in Safari.
 ${color.bold('Link:')} ${color.bold(url)}

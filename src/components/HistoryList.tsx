@@ -1,4 +1,3 @@
-// The History screen: Today / Week / All filter, search, and day-grouped rows.
 import { useMemo, useState } from 'react';
 import { matchesQuery, type ScanRecord } from '../lib/history';
 import { groupByDay, withinDays } from '../../shared/format';

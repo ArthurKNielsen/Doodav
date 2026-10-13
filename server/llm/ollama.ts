@@ -1,8 +1,5 @@
-// Ollama runs open-source vision models on your own computer. No account, no key, no cost.
-// Install from https://ollama.com, then: ollama pull qwen2.5vl:7b
 import { LlmError, type LlmProvider, type LlmRequest } from './types.js';
 
-// Local CPU inference can be slow, so allow a generous timeout.
 const TIMEOUT_MS = 180_000;
 
 interface OllamaChatBody {
@@ -69,7 +66,6 @@ export function createOllama(env: NodeJS.ProcessEnv = process.env): LlmProvider 
         if (!res.ok) return { ready: false, message: `Ollama answered with HTTP ${res.status}.` };
         const data = (await res.json()) as { models?: Array<{ name?: string; model?: string }> };
         const names = (data.models ?? []).flatMap((m) => [m.name, m.model]).filter(Boolean) as string[];
-        // "qwen2.5vl" matches "qwen2.5vl:latest" too, so compare the base name when no tag is given.
         const found = names.some((n) => n === model || (!model.includes(':') && n.split(':')[0] === model));
         return found
           ? { ready: true, message: `Using ${model} through Ollama.` }

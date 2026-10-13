@@ -1,6 +1,4 @@
-// Doohav service worker: caches the app shell so it opens offline.
-// API calls (/api/...) are never cached, so scans always hit the server.
-const CACHE = 'doohav-shell-v1';
+const CACHE = 'doodav-shell-v1';
 const SHELL = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -19,11 +17,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  // Only handle same-origin GETs. Leave API calls and cross-origin requests alone.
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
-  // Hashed build assets never change, so serve them from cache first.
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -38,7 +34,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Pages and other files: network first, falling back to the cached copy when offline.
   event.respondWith(
     fetch(request)
       .then((res) => {

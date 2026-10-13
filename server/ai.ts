@@ -1,9 +1,8 @@
-// The app's AI tasks, written against the provider-neutral LlmProvider interface.
 import type { AskTurn, ScanItem } from '../shared/types.js';
 import { extractJsonObject, validateIdentification, type ValidationResult } from '../shared/validate.js';
 import type { LlmMessage, LlmProvider } from './llm/index.js';
 
-const IDENTIFY_SYSTEM = `You identify objects in photos for a mobile app called Doohav.
+const IDENTIFY_SYSTEM = `You identify objects in photos for a mobile app called Doodav.
 Reply with ONLY one JSON object. No markdown fences, no prose. Use this exact shape:
 {
   "name": string,                 // short common name, e.g. "Monstera deliciosa"
@@ -29,7 +28,7 @@ Rules:
 - "allergens" is only for food. For non-food, use null.
 - Keep every string short.`;
 
-const ASK_SYSTEM_PREFIX = `You are Doohav's follow-up helper. The user scanned an item and is asking a question about it.
+const ASK_SYSTEM_PREFIX = `You are Doodav's follow-up helper. The user scanned an item and is asking a question about it.
 The item's info card is below as JSON. Answer in plain text, under about 120 words, no markdown headings.
 If the answer is not on the card and you are not sure, say you do not know rather than guessing.
 Treat prices as estimates. For safety questions (food, electrical, chemicals, medicine), be conservative and recommend checking the product label or an expert.
@@ -37,10 +36,6 @@ Treat prices as estimates. For safety questions (food, electrical, chemicals, me
 ITEM CARD:
 `;
 
-/**
- * Sends the photo to the configured model and returns a validated ScanItem.
- * `hint` is optional extra context, e.g. "a barcode was read but is not in the food database".
- */
 export async function identifyImage(
   provider: LlmProvider,
   imageBase64: string,
@@ -64,22 +59,16 @@ export async function identifyImage(
   return validateIdentification(parsed);
 }
 
-/**
- * Keeps the conversation in strict user/assistant alternation, starting with a user turn,
- * which most chat APIs require.
- */
 export function normalizeHistory(turns: AskTurn[]): AskTurn[] {
   const out: AskTurn[] = [];
   for (const t of turns) {
     const expected = out.length % 2 === 0 ? 'user' : 'assistant';
     if (t.role === expected) out.push(t);
   }
-  // The new question is a user turn, so a trailing user turn would repeat the role. Drop it.
   if (out.length % 2 === 1) out.pop();
   return out;
 }
 
-/** Answers a follow-up question about a scanned item. */
 export async function askAboutItem(
   provider: LlmProvider,
   item: ScanItem,

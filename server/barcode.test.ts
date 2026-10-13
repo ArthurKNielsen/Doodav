@@ -3,7 +3,6 @@ import { lookupBarcode } from './barcode';
 
 const CODE = '5000159484695';
 
-/** Answers each database host with a canned response. */
 function stubDatabases(answers: Record<string, () => Response>) {
   vi.stubGlobal(
     'fetch',

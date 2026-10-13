@@ -1,4 +1,4 @@
-# Doohav
+# Doodav
 
 Point your phone at anything (food, a plant, a gadget, a book, a tool) or a product barcode, tap **Scan**, and get a clean info card. Every scan is saved to a searchable history, and you can ask follow-up questions about any item.
 
@@ -156,7 +156,7 @@ Open <http://localhost:5173> in Chrome or Safari. Allow the camera if asked. The
 
 | # | Try this | ✅ You should see |
 | --- | --- | --- |
-| a | Look at the top of the screen | "Doohav" header, and the Scan / History tabs at the bottom |
+| a | Look at the top of the screen | "Doodav" header, and the Scan / History tabs at the bottom |
 | b | Point the camera at any object (a mug, a plant) and tap **Scan** | "Identifying…" for up to a minute the first time (the model loads), then an info card with a name, category, and facts |
 | c | Tap **Ask about this**, type "What is it made of?", tap **Send** | An answer appears in a chat bubble |
 | d | Tap **Choose a photo instead** and pick a photo of a food product that shows its barcode | A product card from Open Food Facts (needs internet). If you have no barcode photo, skip this one |
@@ -180,14 +180,14 @@ Stop the app with **Ctrl+C** in the terminal when you're done.
    npm run phone
    ```
 
-3. Wait for **"Doohav is running!"** and a QR code. This can take 10 to 20 seconds.
+3. Wait for **"Doodav is running!"** and a QR code. This can take 10 to 20 seconds.
 4. On your iPhone, open the **Camera** app, point it at the QR code, and tap the link. It opens in Safari.
 5. Tap **Allow** when Safari asks for camera access. If you tapped Don't Allow, go to **Settings > Safari > Camera** and set it to Allow, then reload.
 
 Now run the same checks as Step 8 (a to g) on the phone. Then:
 
 6. Tap the **Share** button (square with an arrow) > **Add to Home Screen** > **Add**.
-7. Close Safari, open **Doohav** from your home screen. It should open full screen with no browser bar.
+7. Close Safari, open **Doodav** from your home screen. It should open full screen with no browser bar.
 
 ✅ Pass: the scan, the follow-up question, and the history all work on the phone.
 
@@ -202,10 +202,10 @@ Keep the terminal open while you use the phone. Press **Ctrl+C** to stop. The li
 | "Ollama isn't running" | Open the Ollama app, or run `ollama serve`, then refresh. |
 | "Ollama doesn't have the model" | Run `ollama pull qwen2.5vl:7b`. |
 | Scan takes more than 2 minutes | Your computer is slow for the model. Try `ollama pull qwen2.5vl:3b`, set `OLLAMA_MODEL=qwen2.5vl:3b` in `.env`, and restart `npm run dev`. |
-| "Can't reach the Doohav server" | `npm run dev` isn't running, or the API crashed. Check the terminal for red text. |
+| "Can't reach the Doodav server" | `npm run dev` isn't running, or the API crashed. Check the terminal for red text. |
 | Barcode not found | Not every barcode is in Open Food Facts. Non-food items go to the AI instead. |
 | Phone shows "needs a secure (https://) address" | You opened the `http://` address. Use the `https://…trycloudflare.com` link from `npm run phone`. |
-| Phone camera blocked | Settings > Safari > Camera > Allow, then fully close and reopen Doohav. |
+| Phone camera blocked | Settings > Safari > Camera > Allow, then fully close and reopen Doodav. |
 | `cloudflared: command not found` | Install it (Step 9.1), then open a new terminal. |
 
 ## 1. Install
@@ -324,13 +324,13 @@ Then point Vite at the certificates by adding `https: { cert: 'cert.pem', key: '
 1. Open your HTTPS address in **Safari** (not Chrome; only Safari can add a home-screen web app on iPhone).
 2. Tap the **Share** button (square with an arrow).
 3. Scroll and tap **Add to Home Screen**, then **Add**.
-4. Open **Doohav** from your home screen. It runs full screen, like an app.
+4. Open **Doodav** from your home screen. It runs full screen, like an app.
 
 To use the offline shell and the service worker, run a production build (see below). Dev mode skips caching so your edits show up right away.
 
 ## 6. Camera permission
 
-If the camera is blocked, go to **Settings > Safari > Camera** and set it to **Allow** (or **Ask**). Then fully close and reopen Doohav. You can also tap **Choose a photo instead** at any time.
+If the camera is blocked, go to **Settings > Safari > Camera** and set it to **Allow** (or **Ask**). Then fully close and reopen Doodav. You can also tap **Choose a photo instead** at any time.
 
 ## Production-style run (optional)
 
@@ -417,5 +417,5 @@ scripts/make-icons.py Icon generator
 - **"Ollama isn't running"**: open the Ollama app (or run `ollama serve`), then refresh.
 - **"Ollama doesn't have the model"**: run the `ollama pull ...` command the message shows.
 - **"GEMINI_API_KEY is not set"**: add your free key to `.env` (with `AI_PROVIDER=gemini`) and restart.
-- **"Can't reach the Doohav server"**: make sure `npm run dev` is still running.
+- **"Can't reach the Doodav server"**: make sure `npm run dev` is still running.
 - **Barcode not found**: Open Food Facts only covers food and drink. Non-food barcodes go to the AI model with the photo.
