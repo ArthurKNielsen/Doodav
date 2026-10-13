@@ -2,6 +2,7 @@
 // Checks what's ready for a test run and tells you what to fix. Run: npm run doctor
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { findCloudflared } from './cloudflared.mjs';
 
 const isWindows = process.platform === 'win32';
 const ok = (msg) => console.log(`  \x1b[32m✔\x1b[0m ${msg}`);
@@ -52,8 +53,7 @@ if (provider === 'gemini') {
 }
 
 // Cloudflare tunnel for the phone
-const cf = spawnSync('cloudflared', ['--version'], { shell: isWindows, stdio: 'ignore' });
-if (cf.status === 0) {
+if (findCloudflared()) {
   ok('cloudflared installed (phone camera will work through the tunnel)');
 } else {
   warn('cloudflared not installed. Needed for the phone camera. Free, one-time install.');

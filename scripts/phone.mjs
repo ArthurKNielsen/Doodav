@@ -7,6 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { networkInterfaces } from 'node:os';
+import { findCloudflared } from './cloudflared.mjs';
 
 const WEB_PORT = 5173;
 const API_PORT = Number(process.env.PORT) || 8787;
@@ -54,8 +55,8 @@ const color = {
 };
 
 /** Starts a child process and prefixes its output so you can tell the pieces apart. */
-function start(label, cmd, args, { onLine } = {}) {
-  const child = spawn(cmd, args, { shell: isWindows, stdio: ['ignore', 'pipe', 'pipe'] });
+function start(label, cmd, args, { onLine, shell = isWindows } = {}) {
+  const child = spawn(cmd, args, { shell, stdio: ['ignore', 'pipe', 'pipe'] });
   children.push(child);
   const recent = []; // last lines of output, shown if this process dies
   const handle = (chunk) => {
@@ -91,10 +92,6 @@ function lanAddress() {
   return null;
 }
 
-function hasCommand(cmd) {
-  return spawnSync(cmd, ['--version'], { shell: isWindows, stdio: 'ignore' }).status === 0;
-}
-
 function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
@@ -124,10 +121,12 @@ function openTunnel() {
   const lan = lanAddress();
   const lanUrl = lan ? `http://${lan}:${WEB_PORT}` : null;
 
-  if (!hasCommand('cloudflared')) {
+  const cloudflared = findCloudflared();
+  if (!cloudflared) {
     console.log(`
 ${color.yellow('cloudflared is not installed, so the phone can open the app but the camera will be blocked.')}
-Install it once (free), then run npm run phone again:
+Install it once (free), then run npm run phone again.
+  If it's installed but not found, set CLOUDFLARED_PATH to the full path of cloudflared.exe.
   macOS:    brew install cloudflared
   Windows:  winget install --id Cloudflare.cloudflared
   Linux:    see the README, section 4
@@ -139,7 +138,8 @@ ${color.bold('Meanwhile, test on your phone over Wi-Fi (no camera, but "Choose a
   }
 
   let announced = false;
-  start('tunnel', 'cloudflared', ['tunnel', '--no-autoupdate', '--url', `http://localhost:${WEB_PORT}`], {
+  start('tunnel', cloudflared, ['tunnel', '--no-autoupdate', '--url', `http://localhost:${WEB_PORT}`], {
+    shell: false,
     onLine: (line) => {
       const match = line.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
       if (match && !announced) {
