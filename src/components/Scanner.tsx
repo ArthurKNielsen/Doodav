@@ -89,8 +89,8 @@ export function Scanner({ onScanned, setupMessage }: Props) {
   return (
     <section className="scanner" aria-label="Camera">
       {setupMessage && (
-        <Notice tone="warn" title="Setup needed">
-          Object scans won't work yet. Barcode scans still do. {setupMessage}
+        <Notice tone="info" title="Barcodes work now">
+          Naming objects (not barcodes) needs an AI, which isn't set up yet. {setupMessage}
         </Notice>
       )}
 
