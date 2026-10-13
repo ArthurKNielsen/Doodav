@@ -70,7 +70,7 @@ node -v
 ```bash
 git clone https://github.com/ArthurKNielsen/Doodav.git
 cd Doodav
-git checkout claude/doohickey-pwa-app-9qozyt
+git checkout main
 ```
 
 No git? Download the ZIP from GitHub, unzip it, switch to the branch on GitHub, and open the folder in your terminal.
