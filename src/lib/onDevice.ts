@@ -1,0 +1,106 @@
+// On-device naming. Runs a small image classifier in the phone's browser, so it
+// needs no API key and no server. The first use downloads the model, then the browser caches it.
+import { buildOnDeviceItem, prettyLabel, type Prediction, type WikiSummary } from '../../shared/onDevice';
+import type { ScanItem } from '../../shared/types';
+
+// Pinned version of the browser build of Hugging Face's transformers.js.
+const LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1/dist/transformers.web.min.js';
+// ImageNet classifier (1000 everyday object classes) with 8-bit weights to keep the download small.
+const MODEL_ID = 'Xenova/vit-base-patch16-224';
+
+interface ClassifierLibrary {
+  env: { allowLocalModels: boolean };
+  pipeline(task: 'image-classification', model: string, options: Record<string, unknown>): Promise<Classifier>;
+}
+type Classifier = (input: string, options?: { top_k?: number }) => Promise<unknown>;
+
+interface ProgressEvent {
+  status: string;
+  progress?: number;
+}
+
+let classifierPromise: Promise<Classifier> | null = null;
+let onProgress: ((event: ProgressEvent) => void) | null = null;
+
+/** Loads the library and model once. Retries on the next scan if the download fails. */
+function loadClassifier(): Promise<Classifier> {
+  if (!classifierPromise) {
+    classifierPromise = (async () => {
+      const lib = (await import(/* @vite-ignore */ LIBRARY_URL)) as ClassifierLibrary;
+      lib.env.allowLocalModels = false;
+      return lib.pipeline('image-classification', MODEL_ID, {
+        dtype: 'q8',
+        progress_callback: (event: ProgressEvent) => onProgress?.(event),
+      });
+    })().catch((err) => {
+      classifierPromise = null;
+      throw err;
+    });
+  }
+  return classifierPromise;
+}
+
+/** Wikipedia's free summary API (no key). Returns null for unknown or ambiguous titles. */
+export async function fetchWikiSummary(title: string): Promise<WikiSummary | null> {
+  const slug = encodeURIComponent(title.replace(/ /g, '_'));
+  try {
+    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      type?: string;
+      title?: string;
+      extract?: string;
+      content_urls?: { desktop?: { page?: string } };
+    };
+    // "disambiguation" pages would describe the wrong thing, so skip them.
+    if (data.type !== 'standard' || !data.extract) return null;
+    return {
+      title: data.title ?? title,
+      extract: data.extract,
+      url: data.content_urls?.desktop?.page ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Names the object in a canvas on the device. `onStatus` gets short messages
+ * ("Downloading model… 40%") so the user knows what's happening on the first scan.
+ */
+export async function identifyOnDevice(
+  canvas: HTMLCanvasElement,
+  onStatus: (message: string) => void,
+): Promise<ScanItem> {
+  onProgress = (event) => {
+    if (event.status === 'progress' && typeof event.progress === 'number') {
+      onStatus(`Downloading the on-device model… ${Math.round(event.progress)}%`);
+    }
+  };
+  onStatus('Loading the on-device model…');
+
+  let predictions: Prediction[];
+  try {
+    const classify = await loadClassifier();
+    onStatus('Naming it on your device…');
+    const raw = (await classify(canvas.toDataURL('image/jpeg', 0.9), { top_k: 3 })) as Array<{
+      label: string;
+      score: number;
+    }>;
+    predictions = raw.map((p) => ({ label: p.label, score: p.score }));
+  } catch {
+    throw new Error(
+      "The on-device model couldn't load. Check your internet connection and try again. Barcodes still work offline.",
+    );
+  } finally {
+    onProgress = null;
+  }
+
+  const top = predictions[0];
+  const wiki = top ? await fetchWikiSummary(prettyLabel(top.label)) : null;
+  const item = buildOnDeviceItem(predictions, wiki);
+  if (!item) throw new Error("Couldn't name this object. Try a clearer photo.");
+  return item;
+}

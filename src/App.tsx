@@ -42,7 +42,7 @@ export default function App() {
     setOpenId(null);
   }
 
-  const setupMessage = health?.reachable && !health.ready ? health.message : null;
+  const aiReady = health?.reachable === true && health.ready;
 
   return (
     <div className="app">
@@ -66,7 +66,7 @@ export default function App() {
             <InfoCard record={openRecord} onTurns={onTurns} onDelete={onDelete} />
           </>
         ) : tab === 'scan' ? (
-          <Scanner onScanned={onScanned} setupMessage={setupMessage} />
+          <Scanner onScanned={onScanned} aiReady={aiReady} />
         ) : (
           <HistoryList records={records} onOpen={setOpenId} onClearAll={() => setRecords([])} />
         )}

@@ -2,6 +2,7 @@
 // barcode first, and falls back to AI vision when there isn't one.
 import { useRef, useState } from 'react';
 import { ApiError, identify, lookupBarcode } from '../lib/api';
+import { identifyOnDevice } from '../lib/onDevice';
 import { detectBarcode } from '../lib/barcode';
 import { canvasFromFile, canvasToJpegBase64, drawScaled, makeThumbnail } from '../lib/image';
 import { useCamera } from '../lib/useCamera';
@@ -10,8 +11,8 @@ import { Notice } from './Notice';
 
 interface Props {
   onScanned: (item: ScanItem, thumbnail: string | null) => void;
-  /** Shown as a setup banner when the AI isn't ready. Barcode scans still work. */
-  setupMessage: string | null;
+  /** True when a server AI (Ollama or Gemini) is configured. Otherwise naming runs on the phone. */
+  aiReady: boolean;
 }
 
 type Phase =
@@ -19,7 +20,7 @@ type Phase =
   | { kind: 'working'; label: string }
   | { kind: 'error'; message: string };
 
-export function Scanner({ onScanned, setupMessage }: Props) {
+export function Scanner({ onScanned, aiReady }: Props) {
   // Mounted only on the Scan tab, so the camera stops when you leave it.
   const camera = useCamera(true);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -51,8 +52,10 @@ export function Scanner({ onScanned, setupMessage }: Props) {
         }
       }
 
-      setPhase({ kind: 'working', label: 'Identifying…' });
-      const item = await identify(canvasToJpegBase64(canvas), hint);
+      if (aiReady) setPhase({ kind: 'working', label: 'Identifying…' });
+      const item = aiReady
+        ? await identify(canvasToJpegBase64(canvas), hint)
+        : await identifyOnDevice(canvas, (message) => setPhase({ kind: 'working', label: message }));
       onScanned(item, thumbnail);
       setPhase({ kind: 'idle' });
     } catch (err) {
@@ -88,9 +91,10 @@ export function Scanner({ onScanned, setupMessage }: Props) {
 
   return (
     <section className="scanner" aria-label="Camera">
-      {setupMessage && (
-        <Notice tone="info" title="Barcodes work now">
-          Naming objects (not barcodes) needs an AI, which isn't set up yet. {setupMessage}
+      {!aiReady && (
+        <Notice tone="info" title="Naming runs on your phone">
+          No AI key is set, so objects are named on this device. The first scan downloads a model once. Barcodes
+          always work.
         </Notice>
       )}
 
