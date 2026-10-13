@@ -47,6 +47,29 @@ The link changes every time you run `npm run phone`. If the camera says it's blo
 
 ---
 
+## Put it online (use it on your iPhone without your laptop)
+
+This runs the app on a free web host with Google's free Gemini AI. Once it's up, the phone only needs the internet, and the camera works because the address is `https://`.
+
+1. **Get a free Gemini key** at <https://aistudio.google.com/apikey>.
+2. **Create a free web service** on [Render](https://render.com) (sign in with GitHub, then New > Web Service, and pick the `Doodav` repo, branch `main`). Render's free plan and features may change, so check their page if the options look different.
+3. **Fill in the settings:**
+   - Runtime: Node
+   - Build command: `npm install && npm run build`
+   - Start command: `npm start`
+   - Environment variables:
+     - `AI_PROVIDER` = `gemini`
+     - `GEMINI_API_KEY` = your key
+     - `NODE_ENV` = leave unset (the build needs the dev tools)
+4. **Deploy.** When it says Live, Render gives you an address like `https://doodav.onrender.com`.
+5. **On your iPhone:** open that address in Safari, then Share > Add to Home Screen. It opens full screen like an app.
+
+Good to know:
+- Free hosts sleep when idle. The first scan after a quiet period can take 30 to 60 seconds to wake up.
+- Your key lives only in the host's settings, never in the code or in git.
+- Every push to `main` redeploys automatically. Update with `git pull` as before.
+- The free Gemini tier has daily and per-minute limits. The app shows a message if you hit them.
+
 ## Test from scratch (new computer, step by step)
 
 This walks through everything, starting from a computer with nothing installed. Each step says what you should see. If a step doesn't match, jump to **Troubleshooting** at the bottom.

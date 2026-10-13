@@ -3,6 +3,8 @@
 //   POST /api/identify        -> photo (base64 JPEG) -> validated info card
 //   GET  /api/barcode/:code   -> Open Food Facts lookup -> info card (404 if unknown)
 //   POST /api/ask             -> follow-up question about a card -> plain-text answer
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { askAboutItem, identifyImage } from './ai.js';
 import { createProvider, LlmError, type LlmProvider } from './llm/index.js';
@@ -102,6 +104,20 @@ app.post('/api/ask', async (req: Request, res: Response) => {
     handleAiError(res, err);
   }
 });
+
+// Serve the built web app when it exists (npm run build). This lets one server host
+// both the app and the API, which is how the hosted version runs. In dev, Vite serves the app instead.
+const distDir = fileURLToPath(new URL('../dist', import.meta.url));
+if (existsSync(distDir)) {
+  app.use(express.static(distDir));
+  // Client-side fallback: any page request that isn't an API call gets the app shell.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+      return res.sendFile('index.html', { root: distDir });
+    }
+    next();
+  });
+}
 
 // Last-resort handler, e.g. malformed JSON in the request body.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
