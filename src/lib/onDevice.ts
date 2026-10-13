@@ -22,6 +22,12 @@ interface ProgressEvent {
 
 let classifierPromise: Promise<Classifier> | null = null;
 
+/** A short, readable description of an error for the status line. */
+function describeError(err: unknown): string {
+  if (err instanceof Error) return `${err.name}: ${err.message}`.slice(0, 200);
+  return String(err).slice(0, 200);
+}
+
 /** Loads the library and model once, timing the load. Retries on the next scan if it fails. */
 function loadClassifier(): Promise<Classifier> {
   if (!classifierPromise) {
@@ -43,12 +49,15 @@ function loadClassifier(): Promise<Classifier> {
         patchOnDeviceStatus({ state: 'ready', progress: 100, startedAt: null, loadMs: Date.now() - startedAt });
         return classify;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         classifierPromise = null;
+        // Keep the real cause, so the screen can say what actually failed.
+        const detail = describeError(err);
+        console.error('[on-device] model failed to load:', err);
         patchOnDeviceStatus({
           state: 'error',
           startedAt: null,
-          message: "The on-device model couldn't load. Check your internet connection and try again.",
+          message: `The on-device model couldn't load (${detail}). Check your internet connection, then tap Try again.`,
         });
         throw err;
       });
@@ -111,10 +120,8 @@ export async function identifyOnDevice(
     }>;
     patchOnDeviceStatus({ lastScanMs: Date.now() - scanStarted });
     predictions = raw.map((p) => ({ label: p.label, score: p.score }));
-  } catch {
-    throw new Error(
-      "The on-device model couldn't load. Check your internet connection and try again. Barcodes still work offline.",
-    );
+  } catch (err) {
+    throw new Error(`The on-device model couldn't load (${describeError(err)}). Tap Try again on Profile.`);
   }
 
   const top = predictions[0];
