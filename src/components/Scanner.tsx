@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ApiError, identify, lookupBarcode } from '../lib/api';
 import { identifyOnDevice } from '../lib/onDevice';
 import { detectBarcode } from '../lib/barcode';
-import { canvasFromFile, canvasToJpegBase64, drawScaled, makeThumbnail } from '../lib/image';
+import { canvasFromFile, canvasToJpegBase64, drawScaled, makeThumbnail, MAX_SIDE } from '../lib/image';
+
+/** Barcodes need detail. Read them from a larger frame than the AI gets. */
+const BARCODE_SIDE = 1920;
 import { useCamera } from '../lib/useCamera';
 import type { ScanItem } from '../../shared/types';
 import { Icon } from './Icon';
@@ -31,13 +34,14 @@ export function Scanner({ onScanned, aiReady, scanTick }: Props) {
   const busy = phase.kind === 'working';
   const ready = camera.status === 'ready';
 
-  /** Barcode first. If there's no product barcode, the AI names the object in the photo. */
-  async function scanCanvas(canvas: HTMLCanvasElement) {
-    const thumbnail = makeThumbnail(canvas);
+  /** Barcode first (from the full frame). If there's no product barcode, the AI names the object. */
+  async function scanCanvas(frame: HTMLCanvasElement) {
+    const small = drawScaled(frame, frame.width, frame.height, MAX_SIDE);
+    const thumbnail = makeThumbnail(small);
     try {
       let hint: string | undefined;
       setPhase({ kind: 'working', label: 'Reading barcode…' });
-      const code = await detectBarcode(canvas);
+      const code = await detectBarcode(frame);
       if (code) {
         setPhase({ kind: 'working', label: 'Looking up product…' });
         try {
@@ -53,8 +57,8 @@ export function Scanner({ onScanned, aiReady, scanTick }: Props) {
 
       if (aiReady) setPhase({ kind: 'working', label: 'Identifying…' });
       const item = aiReady
-        ? await identify(canvasToJpegBase64(canvas), hint)
-        : await identifyOnDevice(canvas, (message) => setPhase({ kind: 'working', label: message }));
+        ? await identify(canvasToJpegBase64(small), hint)
+        : await identifyOnDevice(small, (message) => setPhase({ kind: 'working', label: message }));
       onScanned(item, thumbnail);
       setPhase({ kind: 'idle' });
     } catch (err) {
@@ -72,7 +76,7 @@ export function Scanner({ onScanned, aiReady, scanTick }: Props) {
       setPhase({ kind: 'error', message: 'The camera is still starting. Try again in a second.' });
       return;
     }
-    scanCanvas(drawScaled(video, video.videoWidth, video.videoHeight));
+    scanCanvas(drawScaled(video, video.videoWidth, video.videoHeight, BARCODE_SIDE));
   }
 
   // The bottom-bar button bumps scanTick. Skip the first render, when it's still 0.
