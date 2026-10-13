@@ -49,6 +49,15 @@ export function InfoCard({ record, onTurns, onDelete, startAsking = false, askAv
   const { item } = record;
   const [askOpen, setAskOpen] = useState(startAsking);
   const price = item.price ? formatPrice(item.price) : null;
+  const hasDetails =
+    !!item.description ||
+    item.keyFacts.length > 0 ||
+    !!item.price ||
+    item.whereToBuy.length > 0 ||
+    item.careTips.length > 0 ||
+    !!item.allergens ||
+    !!item.disposal ||
+    !!item.funFact;
   const tone = item.source === 'barcode' || item.confidence === 'high' ? 'ok' : item.confidence === 'medium' ? 'warn' : 'low';
 
   return (
@@ -77,6 +86,12 @@ export function InfoCard({ record, onTurns, onDelete, startAsking = false, askAv
 
       {!item.identified && (
         <Notice tone="warn" title="Best guess">{item.confidenceNote ?? "I'm not sure what this is."}</Notice>
+      )}
+
+      {!hasDetails && (
+        <Notice tone="info" title="No details found">
+          Couldn't find more information about this item. Scan its barcode for exact details.
+        </Notice>
       )}
 
       {item.keyFacts.length > 0 && (

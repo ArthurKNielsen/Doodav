@@ -1,4 +1,4 @@
-import { buildOnDeviceItem, prettyLabel, type Prediction, type WikiSummary } from '../../shared/onDevice';
+import { buildOnDeviceItem, type Prediction } from '../../shared/onDevice';
 import type { ScanItem } from '../../shared/types';
 import { getOnDeviceStatus, patchOnDeviceStatus } from './aiStatus';
 
@@ -73,30 +73,6 @@ export function preloadOnDevice(): Promise<void> {
   );
 }
 
-export async function fetchWikiSummary(title: string): Promise<WikiSummary | null> {
-  const slug = encodeURIComponent(title.replace(/ /g, '_'));
-  try {
-    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      type?: string;
-      title?: string;
-      extract?: string;
-      content_urls?: { desktop?: { page?: string } };
-    };
-    if (data.type !== 'standard' || !data.extract) return null;
-    return {
-      title: data.title ?? title,
-      extract: data.extract,
-      url: data.content_urls?.desktop?.page ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
-
 export async function identifyOnDevice(
   canvas: HTMLCanvasElement,
   onStatus: (message: string) => void,
@@ -118,9 +94,7 @@ export async function identifyOnDevice(
     throw new Error(`The on-device model couldn't load (${describeError(err)}). Tap Try again on Profile.`);
   }
 
-  const top = predictions[0];
-  const wiki = top ? await fetchWikiSummary(prettyLabel(top.label)) : null;
-  const item = buildOnDeviceItem(predictions, wiki);
+  const item = buildOnDeviceItem(predictions);
   if (!item) throw new Error("Couldn't name this object. Try a clearer photo.");
   return item;
 }

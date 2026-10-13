@@ -5,12 +5,6 @@ export interface Prediction {
   score: number;
 }
 
-export interface WikiSummary {
-  title: string;
-  extract: string;
-  url: string | null;
-}
-
 export function prettyLabel(raw: string): string {
   const first = raw.split(',')[0].trim();
   return first.charAt(0).toUpperCase() + first.slice(1);
@@ -23,14 +17,11 @@ export function confidenceFor(score: number): { identified: boolean; confidence:
   };
 }
 
-export function firstSentence(text: string, max = 220): string {
-  const trimmed = text.trim();
-  const end = trimmed.search(/\.\s/);
-  const sentence = end === -1 ? trimmed : trimmed.slice(0, end + 1);
-  return sentence.length > max ? `${sentence.slice(0, max - 1).trimEnd()}…` : sentence;
-}
-
-export function buildOnDeviceItem(predictions: Prediction[], wiki: WikiSummary | null): ScanItem | null {
+/**
+ * Builds a card from the on-device guess. The model only knows general categories,
+ * so it never adds details: no description, no facts, and never an exact identification.
+ */
+export function buildOnDeviceItem(predictions: Prediction[]): ScanItem | null {
   const top = predictions[0];
   if (!top) return null;
 
@@ -39,13 +30,12 @@ export function buildOnDeviceItem(predictions: Prediction[], wiki: WikiSummary |
   const others = predictions
     .slice(1, 3)
     .map((p) => `${prettyLabel(p.label)} (${Math.round(p.score * 100)}%)`);
-  const { identified, confidence } = confidenceFor(top.score);
 
   return {
     name,
     category: null,
-    description: wiki?.extract ? firstSentence(wiki.extract) : null,
-    keyFacts: wiki?.url ? [{ label: 'Source', value: 'Wikipedia' }] : [],
+    description: null,
+    keyFacts: [],
     price: null,
     whereToBuy: [],
     careTips: [],
@@ -53,11 +43,10 @@ export function buildOnDeviceItem(predictions: Prediction[], wiki: WikiSummary |
     disposal: null,
     funFact: null,
     isFood: false,
-    // The on-device model only knows general categories, so it never claims an exact identification.
     identified: false,
-    confidence,
+    confidence: null,
     confidenceNote:
-      `Guessed on your device, ${pct}% sure.` +
+      `Best guess from the photo, ${pct}% sure. The phone can't tell brands or models.` +
       (others.length ? ` Other possibilities: ${others.join(', ')}.` : ''),
     source: 'vision',
   };
