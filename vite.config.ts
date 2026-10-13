@@ -5,7 +5,9 @@ import react from '@vitejs/plugin-react';
 const API_PORT = Number(process.env.API_PORT) || 8787;
 const apiProxy = { '/api': { target: `http://localhost:${API_PORT}`, changeOrigin: false } };
 
+// GitHub Pages serves the site under /Doodav/. Locally and on other hosts it is the root.
 export default defineConfig({
+  base: process.env.GITHUB_PAGES ? '/Doodav/' : '/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',

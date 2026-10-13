@@ -101,6 +101,7 @@ export default function App() {
               onTurns={onTurns}
               onDelete={onDelete}
               startAsking={openAsk}
+              askAvailable={aiReady}
             />
           </>
         ) : (

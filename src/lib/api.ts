@@ -1,4 +1,5 @@
 import type { AskTurn, ScanItem } from '../../shared/types';
+import { lookupBarcode as lookupProduct } from '../../server/barcode';
 
 export class ApiError extends Error {
   constructor(
@@ -36,8 +37,15 @@ export function identify(imageBase64: string, hint?: string): Promise<ScanItem> 
   return post<ScanItem>('/api/identify', { image: imageBase64, hint });
 }
 
-export function lookupBarcode(code: string): Promise<ScanItem> {
-  return request<ScanItem>(`/api/barcode/${encodeURIComponent(code)}`);
+export async function lookupBarcode(code: string): Promise<ScanItem> {
+  let item: ScanItem | null;
+  try {
+    item = await lookupProduct(code);
+  } catch {
+    throw new ApiError("Can't reach the product databases. Check your internet connection.", 502, 'upstream_error');
+  }
+  if (!item) throw new ApiError('That barcode is not in the product databases.', 404, 'not_found');
+  return item;
 }
 
 export async function ask(item: ScanItem, question: string, history: AskTurn[]): Promise<string> {

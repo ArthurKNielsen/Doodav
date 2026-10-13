@@ -10,6 +10,7 @@ interface Props {
   onTurns: (id: string, turns: ScanRecord['followUps']) => void;
   onDelete: (id: string) => void;
   startAsking?: boolean;
+  askAvailable: boolean;
 }
 
 export function formatPrice(price: PriceInfo): string | null {
@@ -44,7 +45,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function InfoCard({ record, onTurns, onDelete, startAsking = false }: Props) {
+export function InfoCard({ record, onTurns, onDelete, startAsking = false, askAvailable }: Props) {
   const { item } = record;
   const [askOpen, setAskOpen] = useState(startAsking);
   const price = item.price ? formatPrice(item.price) : null;
@@ -145,7 +146,7 @@ export function InfoCard({ record, onTurns, onDelete, startAsking = false }: Pro
         {new Date(record.createdAt).toLocaleString()}
       </p>
 
-      {!askOpen ? (
+      {!askAvailable ? null : !askOpen ? (
         <button className="btn btn--primary btn--xl" onClick={() => setAskOpen(true)}>
           Ask Doodav about this
           <Icon name="right" size={20} />

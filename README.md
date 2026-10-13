@@ -1,6 +1,6 @@
 # Doodav
 
-**Live app:** [PUT-LINK-HERE](PUT-LINK-HERE)
+**Live app:** https://arthurknielsen.github.io/Doodav/
 
 Point your phone at anything (food, a plant, a gadget, a book, a tool) or a product barcode, tap **Scan**, and get a clean info card. Every scan is saved to a searchable history, and you can ask follow-up questions about any item.
 
