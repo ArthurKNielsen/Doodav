@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { askAboutItem, identifyImage } from './ai.js';
 import { createProvider, LlmError, type LlmProvider } from './llm/index.js';
-import { isValidBarcode, lookupBarcode } from './openFoodFacts.js';
+import { isValidBarcode } from './openFoodFacts.js';
+import { lookupBarcode } from './barcode.js';
 import type { AskTurn, ScanItem } from '../shared/types.js';
 
 // Load .env if it exists (Node 22 built-in; no dotenv dependency needed).

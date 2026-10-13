@@ -43,6 +43,8 @@ Your laptop's webcam works here. Tap **Scan** on a product barcode, or use **Cho
 
 The link changes every time you run `npm run phone`. If the camera says it's blocked, see section 6.
 
+**No AI needed for barcodes.** Barcode scans look products up in free databases (Open Food Facts for food, Open Products Facts for general items, Open Beauty Facts for cosmetics, and Open Library for books by ISBN). None of them need a key or an AI account. Only object scans need the AI, and the app shows a note if it isn't set up.
+
 **What to try first:** scan a food barcode, scan a plant or a gadget, tap "Ask about this", close the app and reopen it to check your history is still there.
 
 ---

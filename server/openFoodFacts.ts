@@ -1,10 +1,23 @@
-// Barcode lookup against Open Food Facts (free, no API key).
-// https://world.openfoodfacts.org/data
+// Product barcode lookups for the Open*Facts family of free databases (no API key).
+// They all share one API shape, so one parser serves them all.
 import type { AllergenInfo, KeyFact, ScanItem } from '../shared/types.js';
 
-const OFF_BASE = 'https://world.openfoodfacts.org/api/v2/product';
-// Open Food Facts asks API users to identify their app in the User-Agent.
-const USER_AGENT = 'Doohav/0.1 (personal project)';
+export interface ProductDatabase {
+  label: string;
+  baseUrl: string;
+  /** Food databases carry nutrition and allergen data. The others don't. */
+  isFood: boolean;
+}
+
+/** Searched in order. The first match wins. */
+export const PRODUCT_DATABASES: ProductDatabase[] = [
+  { label: 'Open Food Facts', baseUrl: 'https://world.openfoodfacts.org/api/v2/product', isFood: true },
+  { label: 'Open Products Facts', baseUrl: 'https://world.openproductsfacts.org/api/v2/product', isFood: false },
+  { label: 'Open Beauty Facts', baseUrl: 'https://world.openbeautyfacts.org/api/v2/product', isFood: false },
+];
+
+// These databases ask API users to identify their app in the User-Agent.
+export const USER_AGENT = 'Doohav/0.1 (personal project)';
 
 /** EAN-8, UPC-A, EAN-13, and GTIN-14 are all 8 to 14 digits. */
 export function isValidBarcode(code: string): boolean {
@@ -36,12 +49,12 @@ function nutrient(n: Record<string, unknown>, key: string, unit: string, label: 
 }
 
 /**
- * Turns an Open Food Facts API response into a ScanItem.
+ * Turns an Open*Facts API response into a ScanItem.
  * Returns null when the product is not in the database (status !== 1).
  * Only fields the database actually has are filled in; nothing is guessed.
- * Open Food Facts has no price data, so price and whereToBuy stay empty.
+ * These databases have no price data, so price and whereToBuy stay empty.
  */
-export function parseOpenFoodFactsResponse(json: unknown): ScanItem | null {
+export function parseOpenFoodFactsResponse(json: unknown, db: ProductDatabase = PRODUCT_DATABASES[0]): ScanItem | null {
   if (typeof json !== 'object' || json === null) return null;
   const body = json as Record<string, unknown>;
   if (body.status !== 1) return null;
@@ -78,7 +91,7 @@ export function parseOpenFoodFactsResponse(json: unknown): ScanItem | null {
   const mayContain = tags(product.traces_tags);
   const ingredients = text(product.ingredients_text);
   const allergens: AllergenInfo | null =
-    contains.length || mayContain.length || ingredients
+    db.isFood && (contains.length || mayContain.length || ingredients)
       ? { contains, mayContain, ingredients }
       : null;
 
@@ -93,23 +106,10 @@ export function parseOpenFoodFactsResponse(json: unknown): ScanItem | null {
     allergens,
     disposal: null,
     funFact: null,
-    isFood: true,
+    isFood: db.isFood,
     identified: true,
     confidence: null,
-    confidenceNote: 'Exact match from the Open Food Facts database.',
+    confidenceNote: `Exact match from ${db.label}.`,
     source: 'barcode',
   };
-}
-
-/**
- * Looks up a barcode. Returns `null` if the product is not in the database.
- * Throws on network errors or timeouts so the route can report them.
- */
-export async function lookupBarcode(code: string): Promise<ScanItem | null> {
-  const res = await fetch(`${OFF_BASE}/${code}.json`, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!res.ok) throw new Error(`Open Food Facts responded with HTTP ${res.status}`);
-  return parseOpenFoodFactsResponse(await res.json());
 }

@@ -133,7 +133,7 @@ export function InfoCard({ record, onTurns, onDelete }: Props) {
       )}
 
       <p className="card__meta">
-        {item.source === 'barcode' ? 'Product data: Open Food Facts' : 'Identified by AI'} · Scanned{' '}
+        {item.source === 'barcode' ? 'Product database lookup' : 'Identified by AI'} · Scanned{' '}
         {new Date(record.createdAt).toLocaleString()}
       </p>
 
