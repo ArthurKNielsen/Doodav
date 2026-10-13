@@ -1,4 +1,4 @@
-// Thin client for the Doohickey API. All requests go to the same origin;
+// Thin client for the Doohav API. All requests go to the same origin;
 // Vite (dev) or the preview server proxies /api to the Express server.
 import type { AskTurn, ScanItem } from '../../shared/types';
 
@@ -18,7 +18,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(path, init);
   } catch {
-    throw new ApiError("Can't reach the Doohickey server. Check that it's running.", 0, 'network');
+    throw new ApiError("Can't reach the Doohav server. Check that it's running.", 0, 'network');
   }
 
   const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string };

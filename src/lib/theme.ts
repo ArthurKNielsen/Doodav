@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 
 export type Theme = 'light' | 'dark';
-const KEY = 'doohickey.theme';
+const KEY = 'doohav.theme';
 
 function initialTheme(): Theme {
   try {

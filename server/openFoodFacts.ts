@@ -4,7 +4,7 @@ import type { AllergenInfo, KeyFact, ScanItem } from '../shared/types.js';
 
 const OFF_BASE = 'https://world.openfoodfacts.org/api/v2/product';
 // Open Food Facts asks API users to identify their app in the User-Agent.
-const USER_AGENT = 'Doohickey/0.1 (personal project)';
+const USER_AGENT = 'Doohav/0.1 (personal project)';
 
 /** EAN-8, UPC-A, EAN-13, and GTIN-14 are all 8 to 14 digits. */
 export function isValidBarcode(code: string): boolean {

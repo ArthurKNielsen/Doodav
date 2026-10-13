@@ -47,7 +47,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <h1 className="brand">Doohickey</h1>
+        <h1 className="brand">Doohav</h1>
         <button
           className="btn btn--ghost btn--compact"
           onClick={toggle}

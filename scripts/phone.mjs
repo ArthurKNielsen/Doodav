@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// One command to run Doohickey on your computer AND open it on your phone.
+// One command to run Doohav on your computer AND open it on your phone.
 //   npm run phone
 // It starts the API server and the web app, opens a free HTTPS tunnel with
 // Cloudflare (needed for the iPhone camera), and prints a QR code to scan.
@@ -28,7 +28,7 @@ function start(label, cmd, args, { onLine } = {}) {
     for (const line of chunk.toString().split(/\r?\n/)) {
       if (!line.trim()) continue;
       onLine?.(line);
-      if (process.env.DOOHICKEY_VERBOSE) console.log(color.dim(`[${label}] ${line}`));
+      if (process.env.DOOHAV_VERBOSE) console.log(color.dim(`[${label}] ${line}`));
     }
   };
   child.stdout.on('data', handle);
@@ -57,7 +57,7 @@ function hasCommand(cmd) {
 function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.log(color.dim('\nStopping Doohickey…'));
+  console.log(color.dim('\nStopping Doohav…'));
   for (const c of children) c.kill();
   setTimeout(() => process.exit(0), 300);
 }
@@ -111,7 +111,7 @@ ${color.bold('Meanwhile, test on your phone over Wi-Fi (no camera, but "Choose a
 
 function announce(url, lanUrl) {
   console.log(`
-${color.green(color.bold('Doohickey is running!'))}
+${color.green(color.bold('Doohav is running!'))}
 
 ${color.bold('On your iPhone:')} scan this QR code with the Camera app and open the link in Safari.
 ${color.bold('Link:')} ${color.bold(url)}

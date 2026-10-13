@@ -1,4 +1,4 @@
-// Doohickey API server. Keeps AI keys on the server and exposes these routes:
+// Doohav API server. Keeps AI keys on the server and exposes these routes:
 //   GET  /api/health          -> is the server up, and is the AI provider ready?
 //   POST /api/identify        -> photo (base64 JPEG) -> validated info card
 //   GET  /api/barcode/:code   -> Open Food Facts lookup -> info card (404 if unknown)
@@ -113,5 +113,5 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Doohickey API listening on http://localhost:${PORT} (AI: ${provider.name})`);
+  console.log(`Doohav API listening on http://localhost:${PORT} (AI: ${provider.name})`);
 });

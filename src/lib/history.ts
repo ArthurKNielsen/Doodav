@@ -11,7 +11,7 @@ export interface ScanRecord {
   followUps: AskTurn[];
 }
 
-const KEY = 'doohickey.history.v1';
+const KEY = 'doohav.history.v1';
 export const MAX_RECORDS = 200;
 
 export function loadHistory(): ScanRecord[] {

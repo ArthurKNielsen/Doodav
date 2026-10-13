@@ -8,7 +8,7 @@ const ok = (msg) => console.log(`  \x1b[32m✔\x1b[0m ${msg}`);
 const warn = (msg) => console.log(`  \x1b[33m!\x1b[0m ${msg}`);
 const fix = (msg) => console.log(`      ${msg}`);
 
-console.log('\nDoohickey checkup\n');
+console.log('\nDoohav checkup\n');
 
 // Node version
 const major = Number(process.versions.node.split('.')[0]);

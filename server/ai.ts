@@ -3,7 +3,7 @@ import type { AskTurn, ScanItem } from '../shared/types.js';
 import { extractJsonObject, validateIdentification, type ValidationResult } from '../shared/validate.js';
 import type { LlmMessage, LlmProvider } from './llm/index.js';
 
-const IDENTIFY_SYSTEM = `You identify objects in photos for a mobile app called Doohickey.
+const IDENTIFY_SYSTEM = `You identify objects in photos for a mobile app called Doohav.
 Reply with ONLY one JSON object. No markdown fences, no prose. Use this exact shape:
 {
   "name": string,                 // short common name, e.g. "Monstera deliciosa"
@@ -29,7 +29,7 @@ Rules:
 - "allergens" is only for food. For non-food, use null.
 - Keep every string short.`;
 
-const ASK_SYSTEM_PREFIX = `You are Doohickey's follow-up helper. The user scanned an item and is asking a question about it.
+const ASK_SYSTEM_PREFIX = `You are Doohav's follow-up helper. The user scanned an item and is asking a question about it.
 The item's info card is below as JSON. Answer in plain text, under about 120 words, no markdown headings.
 If the answer is not on the card and you are not sure, say you do not know rather than guessing.
 Treat prices as estimates. For safety questions (food, electrical, chemicals, medicine), be conservative and recommend checking the product label or an expert.

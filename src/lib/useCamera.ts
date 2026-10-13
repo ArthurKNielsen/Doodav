@@ -17,7 +17,7 @@ export function describeCameraError(err: unknown): Omit<CameraState, 'status'> {
     return {
       errorCode: 'denied',
       error:
-        'Camera access is turned off. On iPhone, go to Settings > Safari > Camera and set it to Allow (or Ask). Then fully close and reopen Doohickey.',
+        'Camera access is turned off. On iPhone, go to Settings > Safari > Camera and set it to Allow (or Ask). Then fully close and reopen Doohav.',
     };
   }
   if (name === 'NotFoundError' || name === 'OverconstrainedError') {

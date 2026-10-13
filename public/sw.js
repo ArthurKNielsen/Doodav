@@ -1,6 +1,6 @@
-// Doohickey service worker: caches the app shell so it opens offline.
+// Doohav service worker: caches the app shell so it opens offline.
 // API calls (/api/...) are never cached, so scans always hit the server.
-const CACHE = 'doohickey-shell-v1';
+const CACHE = 'doohav-shell-v1';
 const SHELL = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
