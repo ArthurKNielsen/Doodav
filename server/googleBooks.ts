@@ -42,7 +42,7 @@ export function parseGoogleBooksResponse(json: unknown, isbn: string): ScanItem 
 
   return {
     name: title,
-    category: 'Book',
+    category: null,
     description: authors.length ? `by ${authors.join(', ')}` : null,
     keyFacts,
     price: null,

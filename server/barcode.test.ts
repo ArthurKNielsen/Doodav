@@ -75,6 +75,6 @@ describe('lookupBarcode for books', () => {
     );
     const item = await lookupBarcode(ISBN);
     expect(item?.name).toBe('Found By Google');
-    expect(item?.category).toBe('Book');
+    expect(item?.category).toBeNull();
   });
 });

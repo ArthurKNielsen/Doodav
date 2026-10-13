@@ -31,7 +31,7 @@ describe('parseOpenLibraryResponse', () => {
       isbn,
     );
     expect(item?.name).toBe('Example Book');
-    expect(item?.category).toBe('Book');
+    expect(item?.category).toBeNull();
     expect(item?.isFood).toBe(false);
     expect(item?.allergens).toBeNull();
     expect(item?.keyFacts).toEqual([
