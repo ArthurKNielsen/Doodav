@@ -66,7 +66,7 @@ export function ProfileView({ theme, onToggleTheme, aiReady, serverMessage, save
         )}
       </div>
 
-      <p className="muted small center">Doodav · scans stay on this device.</p>
+      <p className="muted small center">Doodav · scans stay on this device. Version {__APP_VERSION__} · build {__APP_BUILD__}</p>
     </section>
   );
 }
