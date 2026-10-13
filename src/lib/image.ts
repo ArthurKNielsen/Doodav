@@ -1,6 +1,6 @@
 // Image helpers: resize camera frames before upload and make small thumbnails.
 
-/** Longest side sent to Claude. 1024 px is plenty for recognition and keeps uploads small. */
+/** Longest side sent to the AI model. 1024 px is plenty for recognition and keeps uploads small. */
 export const MAX_SIDE = 1024;
 
 /**

@@ -1,17 +1,7 @@
-// Everything that talks to the Anthropic API lives here. The API key is only
-// read on the server, so it never reaches the browser.
-import Anthropic from '@anthropic-ai/sdk';
+// The app's AI tasks, written against the provider-neutral LlmProvider interface.
 import type { AskTurn, ScanItem } from '../shared/types.js';
 import { extractJsonObject, validateIdentification, type ValidationResult } from '../shared/validate.js';
-
-// Latest Sonnet by default. Override with ANTHROPIC_MODEL in .env if needed.
-export const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
-
-/** Returns a client, or null when no key is configured (the route reports a setup message). */
-export function makeClient(): Anthropic | null {
-  const key = process.env.ANTHROPIC_API_KEY?.trim();
-  return key ? new Anthropic({ apiKey: key }) : null;
-}
+import type { LlmMessage, LlmProvider } from './llm/index.js';
 
 const IDENTIFY_SYSTEM = `You identify objects in photos for a mobile app called Doohickey.
 Reply with ONLY one JSON object. No markdown fences, no prose. Use this exact shape:
@@ -47,48 +37,36 @@ Treat prices as estimates. For safety questions (food, electrical, chemicals, me
 ITEM CARD:
 `;
 
-/** Pulls the text out of a Messages API response. */
-function replyText(message: Anthropic.Messages.Message): string {
-  return message.content
-    .flatMap((block) => (block.type === 'text' ? [block.text] : []))
-    .join('\n')
-    .trim();
-}
-
 /**
- * Sends the photo to Claude and returns a validated ScanItem.
- * `hint` is optional extra context, e.g. "A barcode was read but is not in the food database".
+ * Sends the photo to the configured model and returns a validated ScanItem.
+ * `hint` is optional extra context, e.g. "a barcode was read but is not in the food database".
  */
 export async function identifyImage(
-  client: Anthropic,
+  provider: LlmProvider,
   imageBase64: string,
   hint?: string,
 ): Promise<ValidationResult> {
-  const message = await client.messages.create({
-    model: MODEL,
-    max_tokens: 1200,
+  const reply = await provider.complete({
     system: IDENTIFY_SYSTEM,
+    json: true,
+    maxTokens: 1200,
     messages: [
       {
         role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
-          { type: 'text', text: hint ? `Identify the main object. Note: ${hint}` : 'Identify the main object.' },
-        ],
+        text: hint ? `Identify the main object. Note: ${hint}` : 'Identify the main object.',
+        imageBase64,
       },
     ],
   });
 
-  const parsed = extractJsonObject(replyText(message));
-  if (parsed === undefined) {
-    return { ok: false, error: 'The model reply was not valid JSON.' };
-  }
+  const parsed = extractJsonObject(reply);
+  if (parsed === undefined) return { ok: false, error: 'The model reply was not valid JSON.' };
   return validateIdentification(parsed);
 }
 
 /**
- * Keeps the conversation history in the strict user/assistant alternation the
- * Messages API requires, and starts with a user turn.
+ * Keeps the conversation in strict user/assistant alternation, starting with a user turn,
+ * which most chat APIs require.
  */
 export function normalizeHistory(turns: AskTurn[]): AskTurn[] {
   const out: AskTurn[] = [];
@@ -103,16 +81,20 @@ export function normalizeHistory(turns: AskTurn[]): AskTurn[] {
 
 /** Answers a follow-up question about a scanned item. */
 export async function askAboutItem(
-  client: Anthropic,
+  provider: LlmProvider,
   item: ScanItem,
   question: string,
   history: AskTurn[],
 ): Promise<string> {
-  const message = await client.messages.create({
-    model: MODEL,
-    max_tokens: 500,
+  const messages: LlmMessage[] = [
+    ...normalizeHistory(history).map((t) => ({ role: t.role, text: t.content })),
+    { role: 'user', text: question },
+  ];
+  const reply = await provider.complete({
     system: ASK_SYSTEM_PREFIX + JSON.stringify(item, null, 2),
-    messages: [...normalizeHistory(history), { role: 'user', content: question }],
+    json: false,
+    maxTokens: 500,
+    messages,
   });
-  return replyText(message) || 'Sorry, I could not come up with an answer.';
+  return reply.trim() || 'Sorry, I could not come up with an answer.';
 }

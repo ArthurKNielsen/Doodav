@@ -1,6 +1,6 @@
 // App shell: header, the Scan / History tabs, and the info card view.
 import { useEffect, useState } from 'react';
-import { checkHealth } from './lib/api';
+import { checkHealth, type Health } from './lib/api';
 import { loadHistory, MAX_RECORDS, newRecordId, saveHistory, type ScanRecord } from './lib/history';
 import { useTheme } from './lib/theme';
 import type { AskTurn, ScanItem } from '../shared/types';
@@ -15,7 +15,7 @@ export default function App() {
   const [records, setRecords] = useState<ScanRecord[]>(loadHistory);
   const [tab, setTab] = useState<Tab>('scan');
   const [openId, setOpenId] = useState<string | null>(null);
-  const [health, setHealth] = useState<{ reachable: boolean; hasKey: boolean } | null>(null);
+  const [health, setHealth] = useState<Health | null>(null);
 
   useEffect(() => {
     checkHealth().then(setHealth);
@@ -42,7 +42,7 @@ export default function App() {
     setOpenId(null);
   }
 
-  const setupMissing = health?.reachable === true && !health.hasKey;
+  const setupMessage = health?.reachable && !health.ready ? health.message : null;
 
   return (
     <div className="app">
@@ -66,7 +66,7 @@ export default function App() {
             <InfoCard record={openRecord} onTurns={onTurns} onDelete={onDelete} />
           </>
         ) : tab === 'scan' ? (
-          <Scanner onScanned={onScanned} setupMissing={setupMissing} />
+          <Scanner onScanned={onScanned} setupMessage={setupMessage} />
         ) : (
           <HistoryList records={records} onOpen={setOpenId} onClearAll={() => setRecords([])} />
         )}

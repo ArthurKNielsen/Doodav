@@ -51,12 +51,18 @@ export async function ask(item: ScanItem, question: string, history: AskTurn[]):
   return res.answer;
 }
 
-/** Whether the server has an API key configured. Returns false if the server is unreachable. */
-export async function checkHealth(): Promise<{ reachable: boolean; hasKey: boolean }> {
+export interface Health {
+  reachable: boolean;
+  ready: boolean;
+  message: string;
+}
+
+/** Whether the server is up and the AI provider is configured and reachable. */
+export async function checkHealth(): Promise<Health> {
   try {
-    const res = await request<{ ok: boolean; hasKey: boolean }>('/api/health');
-    return { reachable: true, hasKey: res.hasKey };
+    const res = await request<{ ok: boolean; ready: boolean; message: string }>('/api/health');
+    return { reachable: true, ready: res.ready, message: res.message };
   } catch {
-    return { reachable: false, hasKey: false };
+    return { reachable: false, ready: false, message: '' };
   }
 }

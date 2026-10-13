@@ -1,4 +1,4 @@
-// Validates the JSON that Claude returns for an identification.
+// Validates the JSON the AI model returns for an identification.
 // The model is asked for strict JSON, but we never trust it: every field is
 // checked here, and anything malformed is rejected before it reaches the UI.
 import type { AllergenInfo, Confidence, KeyFact, PriceInfo, ScanItem } from './types';
@@ -75,7 +75,7 @@ function allergens(v: unknown): AllergenInfo | null {
 }
 
 /**
- * Validate the parsed JSON from Claude. Returns a clean ScanItem or a
+ * Validate the parsed JSON from the model. Returns a clean ScanItem or a
  * human-readable error. Top-level fields that are required (name, identified,
  * confidence) fail the whole result; optional fields degrade to null/[].
  */

@@ -1,5 +1,5 @@
 // Live camera view with the Scan button. A tap captures one frame, looks for a
-// barcode first, and falls back to Claude vision when there isn't one.
+// barcode first, and falls back to AI vision when there isn't one.
 import { useRef, useState } from 'react';
 import { ApiError, identify, lookupBarcode } from '../lib/api';
 import { detectBarcode } from '../lib/barcode';
@@ -10,7 +10,8 @@ import { Notice } from './Notice';
 
 interface Props {
   onScanned: (item: ScanItem, thumbnail: string | null) => void;
-  setupMissing: boolean;
+  /** Shown as a setup banner when the AI isn't ready. Barcode scans still work. */
+  setupMessage: string | null;
 }
 
 type Phase =
@@ -18,14 +19,14 @@ type Phase =
   | { kind: 'working'; label: string }
   | { kind: 'error'; message: string };
 
-export function Scanner({ onScanned, setupMissing }: Props) {
+export function Scanner({ onScanned, setupMessage }: Props) {
   // Mounted only on the Scan tab, so the camera stops when you leave it.
   const camera = useCamera(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const busy = phase.kind === 'working';
 
-  /** Runs the full pipeline on one frame: barcode, then Claude if needed. */
+  /** Runs the full pipeline on one frame: barcode, then the AI if needed. */
   async function scanCanvas(canvas: HTMLCanvasElement) {
     const thumbnail = makeThumbnail(canvas);
     try {
@@ -41,7 +42,7 @@ export function Scanner({ onScanned, setupMissing }: Props) {
           setPhase({ kind: 'idle' });
           return;
         } catch (err) {
-          // Not a food product: let Claude look at the photo, and tell it about the barcode.
+          // Not a food product: let the AI look at the photo, and tell it about the barcode.
           if (err instanceof ApiError && err.status === 404) {
             hint = `a barcode (${code}) was read but is not in the food database. It may be a non-food product.`;
           } else {
@@ -87,10 +88,9 @@ export function Scanner({ onScanned, setupMissing }: Props) {
 
   return (
     <section className="scanner" aria-label="Camera">
-      {setupMissing && (
+      {setupMessage && (
         <Notice tone="warn" title="Setup needed">
-          The AI key isn't set yet, so object scans won't work. Barcode scans still do. Add{' '}
-          <code>ANTHROPIC_API_KEY</code> to your <code>.env</code> file and restart the server.
+          Object scans won't work yet. Barcode scans still do. {setupMessage}
         </Notice>
       )}
 

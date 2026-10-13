@@ -2,9 +2,11 @@
 
 Point your phone at anything (food, a plant, a gadget, a book, a tool) or a product barcode, tap **Scan**, and get a clean info card. Every scan is saved to a searchable history, and you can ask follow-up questions about any item.
 
-- **Barcodes:** looked up in [Open Food Facts](https://world.openfoodfacts.org) (free, no key).
-- **Objects:** identified by Claude vision (`claude-sonnet-5-5` by default).
-- **Stack:** React + Vite + TypeScript on the front, a small Express server that holds your API key.
+**Free to run.** No paid AI service and no Anthropic/Claude account:
+
+- **Barcodes:** [Open Food Facts](https://world.openfoodfacts.org), free, no key.
+- **Objects and follow-ups:** a vision model that runs on your own computer through [Ollama](https://ollama.com) (free, no key, no limits). Or Google's free Gemini tier if you'd rather not run a model locally.
+- **Stack:** React + Vite + TypeScript on the front, a small Express server that holds any keys.
 
 ---
 
@@ -17,15 +19,38 @@ cd Doodav
 npm install
 ```
 
-## 2. Add your API key
+## 2. Set up the free AI (pick one)
 
-```bash
-cp .env.example .env
-```
+### Option A: Ollama, local and fully free (default)
 
-Open `.env` and paste your key after `ANTHROPIC_API_KEY=`. Get a key at <https://console.anthropic.com>.
+1. Install Ollama from <https://ollama.com> and open it (it runs in the background).
+2. Download a vision model once. `qwen2.5vl:7b` is a good balance of quality and speed (about 6 GB):
 
-The key lives only on the server. The browser never sees it. Barcode scans work without a key; object scans need one.
+   ```bash
+   ollama pull qwen2.5vl:7b
+   ```
+
+3. Copy the settings file and leave the defaults:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+Ollama needs a computer with enough memory: 16 GB of RAM is comfortable for the 7B model. A slower machine still works, just with longer waits. For a lighter model, use `ollama pull qwen2.5vl:3b` and set `OLLAMA_MODEL=qwen2.5vl:3b` in `.env`.
+
+### Option B: Gemini free tier (hosted, no local model)
+
+1. Create a free key at <https://aistudio.google.com/apikey>.
+2. In `.env`, set:
+
+   ```
+   AI_PROVIDER=gemini
+   GEMINI_API_KEY=your-key-here
+   ```
+
+Free-tier limits apply (requests per minute and per day). If you hit them, the app says so and you can wait a minute. Google may use free-tier data to improve its products, so read their terms if that matters to you.
+
+Barcode scans work without any AI setup.
 
 ## 3. Start the app
 
@@ -38,7 +63,7 @@ This starts two processes:
 - the API server on `http://localhost:8787`
 - the web app on `http://0.0.0.0:5173` (reachable from your phone on the same Wi-Fi)
 
-Check it works on your computer: open <http://localhost:5173>. Your laptop's webcam is used when there's no rear camera.
+Open <http://localhost:5173> on your computer. The app shows a setup note if the AI isn't ready yet (for example, Ollama isn't running or the model isn't downloaded).
 
 ## 4. Get an HTTPS address for your iPhone
 
@@ -133,8 +158,11 @@ Then tunnel port 4173 instead of 5173 (`cloudflared tunnel --url http://localhos
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | (none) | Required for object scans and follow-up questions |
-| `ANTHROPIC_MODEL` | `claude-sonnet-5-5` | Model for vision and follow-ups. Use `claude-sonnet-4-5` if you prefer that one. |
+| `AI_PROVIDER` | `ollama` | `ollama` (local, free) or `gemini` (free tier, needs a key) |
+| `OLLAMA_HOST` | `http://localhost:11434` | Where Ollama is running |
+| `OLLAMA_MODEL` | `qwen2.5vl:7b` | Any vision-capable model you've pulled with `ollama pull` |
+| `GEMINI_API_KEY` | (none) | Required only when `AI_PROVIDER=gemini` |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model name |
 | `PORT` | `8787` | API server port (Vite proxies `/api` here) |
 
 After changing `.env`, restart `npm run dev`.
@@ -143,7 +171,7 @@ After changing `.env`, restart `npm run dev`.
 
 - **Scan:** the app captures one frame from the rear camera and resizes it to 1024 px on the longest side, then JPEG-encodes it.
 - **Barcode first:** the frame is checked for a product barcode using the native `BarcodeDetector` when available (Chrome and Android). Otherwise it uses ZXing, which iPhone Safari needs. A hit goes to Open Food Facts.
-- **Object:** if there's no barcode (or the barcode isn't a food product), the photo goes to Claude, which must reply with strict JSON. The server validates it (`shared/validate.ts`) before anything reaches the screen. Prices are always marked as estimates, and fields the model doesn't know are left empty.
+- **Object:** if there's no barcode (or the barcode isn't a food product), the photo goes to the vision model (Ollama or Gemini), which must reply with strict JSON. The server validates it (`shared/validate.ts`) before anything reaches the screen. Prices are always marked as estimates, and fields the model doesn't know are left empty.
 - **Follow-ups:** each question is one API call, with the card as context and the last few turns of conversation.
 - **History:** saved in your browser's `localStorage`, capped at 200 scans. It stays on that device and browser.
 
@@ -153,19 +181,25 @@ After changing `.env`, restart `npm run dev`.
 npm test
 ```
 
-- `shared/validate.test.ts`: the Claude JSON validator (required fields, caps, price handling, food-only allergens, fenced JSON).
+- `shared/validate.test.ts`: the AI JSON validator (required fields, caps, price handling, food-only allergens, fenced JSON).
 - `server/openFoodFacts.test.ts`: the barcode format check and the Open Food Facts parser.
+- `server/llm/providers.test.ts`: the Ollama and Gemini request and response handling (fetch is mocked, so no real model or key is needed).
 
 ## Project layout
 
 ```
 server/
   index.ts            Express routes (identify, barcode, ask, health)
-  claude.ts           Anthropic calls and prompts
+  ai.ts               Prompts and the identify / follow-up tasks
+  llm/                Provider-neutral model layer
+    types.ts          LlmProvider interface and errors
+    ollama.ts         Local model via Ollama (default)
+    gemini.ts         Google Gemini free tier
+    index.ts          Picks the provider from AI_PROVIDER
   openFoodFacts.ts    Barcode lookup and parser
 shared/
   types.ts            Types used by client and server
-  validate.ts         Validates Claude's JSON
+  validate.ts         Validates the model's JSON
 src/
   App.tsx             Shell, tabs, card view
   components/         Scanner, InfoCard, AskPanel, HistoryList, Notice
@@ -180,6 +214,8 @@ scripts/make-icons.py Icon generator
 ## Troubleshooting
 
 - **"The camera needs a secure (https://) address"**: you're on `http://`. Open the tunnel link.
-- **"ANTHROPIC_API_KEY is not set"**: add the key to `.env` and restart.
+- **"Ollama isn't running"**: open the Ollama app (or run `ollama serve`), then refresh.
+- **"Ollama doesn't have the model"**: run the `ollama pull ...` command the message shows.
+- **"GEMINI_API_KEY is not set"**: add your free key to `.env` (with `AI_PROVIDER=gemini`) and restart.
 - **"Can't reach the Doohickey server"**: make sure `npm run dev` is still running.
-- **Barcode not found**: Open Food Facts only covers food and drink. Non-food barcodes go to Claude with the photo.
+- **Barcode not found**: Open Food Facts only covers food and drink. Non-food barcodes go to the AI model with the photo.
