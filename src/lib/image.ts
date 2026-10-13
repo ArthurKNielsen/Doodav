@@ -57,3 +57,24 @@ export async function canvasFromFile(file: File): Promise<HTMLCanvasElement> {
     URL.revokeObjectURL(url);
   }
 }
+
+/**
+ * Captures the centre of a video frame at a digital zoom level (1 = full frame).
+ * Used by the zoom slider, since phone browsers don't reliably support optical zoom.
+ */
+export function captureFrame(video: HTMLVideoElement, zoom: number): HTMLCanvasElement {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const sw = vw / zoom;
+  const sh = vh / zoom;
+  const sx = (vw - sw) / 2;
+  const sy = (vh - sh) / 2;
+  const scale = Math.min(1, MAX_SIDE / Math.max(sw, sh));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(sw * scale));
+  canvas.height = Math.max(1, Math.round(sh * scale));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas is not supported in this browser.');
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}

@@ -1,7 +1,8 @@
-// Follow-up questions about one scanned item. Each question is one API call.
+// The Ask chat about one scanned item. Each question is one AI call (server or on-device info only, see App).
 import { useState } from 'react';
 import { ask } from '../lib/api';
 import type { AskTurn, ScanItem } from '../../shared/types';
+import { Icon } from './Icon';
 import { Notice } from './Notice';
 
 interface Props {
@@ -10,13 +11,15 @@ interface Props {
   onTurns: (turns: AskTurn[]) => void;
 }
 
+const SUGGESTIONS = ['What is it made of?', 'Is it safe to use?', 'Where can I buy one?'];
+
 export function AskPanel({ item, turns, onTurns }: Props) {
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function send() {
-    const question = draft.trim();
+  async function send(text: string) {
+    const question = text.trim();
     if (!question || pending) return;
 
     const withQuestion: AskTurn[] = [...turns, { role: 'user', content: question }];
@@ -38,25 +41,54 @@ export function AskPanel({ item, turns, onTurns }: Props) {
   }
 
   return (
-    <div className="ask">
+    <section className="card chat" aria-label="Ask about this item">
+      <header className="chat__head">
+        <span className="mark mark--small" aria-hidden="true">
+          <Icon name="scan" size={16} />
+        </span>
+        <div>
+          <strong>Ask Doohav</strong>
+          <p className="muted small">Context from this scan: {item.name}</p>
+        </div>
+      </header>
+
+      {turns.length === 0 && (
+        <div className="chat__suggestions">
+          {SUGGESTIONS.map((s) => (
+            <button key={s} className="suggestion" onClick={() => send(s)} disabled={pending}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
       {turns.length > 0 && (
-        <ul className="ask__log" aria-label="Conversation about this item">
+        <ul className="chat__log" aria-label="Conversation about this item">
           {turns.map((t, i) => (
             <li key={i} className={`bubble bubble--${t.role}`}>
               {t.content}
             </li>
           ))}
-          {pending && <li className="bubble bubble--assistant bubble--pending">Thinking…</li>}
+          {pending && (
+            <li className="typing" role="status">
+              <span className="dots" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              Doohav is typing
+            </li>
+          )}
         </ul>
       )}
 
       {error && <Notice tone="error" title="Couldn't answer">{error}</Notice>}
 
       <form
-        className="ask__form"
+        className="composer"
         onSubmit={(e) => {
           e.preventDefault();
-          send();
+          send(draft);
         }}
       >
         <label className="sr-only" htmlFor="ask-input">
@@ -64,19 +96,19 @@ export function AskPanel({ item, turns, onTurns }: Props) {
         </label>
         <input
           id="ask-input"
-          className="input"
+          className="composer__input"
           type="text"
           enterKeyHint="send"
-          placeholder="e.g. Is this safe for a cat?"
+          placeholder="Ask about this item"
           maxLength={1000}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           disabled={pending}
         />
-        <button className="btn btn--primary" type="submit" disabled={pending || draft.trim() === ''}>
-          Send
+        <button className="composer__send" type="submit" disabled={pending || draft.trim() === ''} aria-label="Send">
+          <Icon name="up" size={20} />
         </button>
       </form>
-    </div>
+    </section>
   );
 }

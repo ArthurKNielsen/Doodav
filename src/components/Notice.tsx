@@ -1,4 +1,4 @@
-// A bordered message box for errors, warnings, and setup help.
+// A rounded message box for errors, warnings, and info.
 import type { ReactNode } from 'react';
 
 interface Props {

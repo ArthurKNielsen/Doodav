@@ -1,14 +1,18 @@
-// The info card. Only sections with real data are rendered, so a plant doesn't
-// get an "Allergens" box and a sparse result doesn't look broken.
+// The Result screen: product hero, key facts, care and safety, and the Ask entry point.
+// Only sections with real data are shown, so nothing is filled in with guesses.
 import { useState, type ReactNode } from 'react';
 import type { PriceInfo, ScanItem } from '../../shared/types';
 import type { ScanRecord } from '../lib/history';
 import { AskPanel } from './AskPanel';
+import { Icon } from './Icon';
+import { Notice } from './Notice';
 
 interface Props {
   record: ScanRecord;
   onTurns: (id: string, turns: ScanRecord['followUps']) => void;
   onDelete: (id: string) => void;
+  /** Open the Ask chat straight away (used by the Ask tab). */
+  startAsking?: boolean;
 }
 
 /** "$20 – $45" for ranges, "$20" for a single number, or null if there's no price. */
@@ -36,49 +40,59 @@ function confidenceLabel(item: ScanItem): string {
   return 'Low confidence';
 }
 
-export function InfoCard({ record, onTurns, onDelete }: Props) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="card section">
+      <h3 className="eyebrow">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+export function InfoCard({ record, onTurns, onDelete, startAsking = false }: Props) {
   const { item } = record;
-  const [askOpen, setAskOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(startAsking);
   const price = item.price ? formatPrice(item.price) : null;
+  const tone = item.source === 'barcode' || item.confidence === 'high' ? 'ok' : item.confidence === 'medium' ? 'warn' : 'low';
 
   return (
-    <article className="card" aria-labelledby={`card-${record.id}`}>
-      <header className="card__header">
-        {record.thumbnail ? (
-          <img className="card__thumb" src={record.thumbnail} alt="" />
-        ) : (
-          <div className="card__thumb card__thumb--empty" aria-hidden="true">?</div>
-        )}
-        <div className="card__title">
-          <h2 id={`card-${record.id}`}>{item.name}</h2>
-          <div className="chips">
-            {item.category && <span className="chip">{item.category}</span>}
-            <span className={`chip chip--${item.source === 'barcode' ? 'ok' : item.confidence ?? 'low'}`}>
-              {confidenceLabel(item)}
+    <article className="result" aria-labelledby={`card-${record.id}`}>
+      <section className="card hero">
+        <div className="hero__image">
+          {record.thumbnail ? (
+            <img src={record.thumbnail} alt="" />
+          ) : (
+            <span className="hero__empty" aria-hidden="true">
+              <Icon name="scan" size={40} />
             </span>
-          </div>
+          )}
+          <span className={`pill pill--${tone}`}>{confidenceLabel(item)}</span>
         </div>
-      </header>
+        <h2 id={`card-${record.id}`} className="hero__title">
+          {item.name}
+        </h2>
+        {item.description && <p className="muted">{item.description}</p>}
+        <div className="chips">
+          {item.category && <span className="chip">{item.category}</span>}
+          {item.isFood && <span className="chip">Food</span>}
+          {item.source === 'barcode' && <span className="chip">Barcode</span>}
+        </div>
+      </section>
 
       {!item.identified && (
-        <div className="notice notice--warn" role="note">
-          <strong>Best guess</strong>
-          <div>{item.confidenceNote ?? "I'm not sure what this is."}</div>
-        </div>
+        <Notice tone="warn" title="Best guess">{item.confidenceNote ?? "I'm not sure what this is."}</Notice>
       )}
-
-      {item.description && <p className="card__lede">{item.description}</p>}
 
       {item.keyFacts.length > 0 && (
         <Section title="Key facts">
-          <dl className="facts">
+          <div className="tiles">
             {item.keyFacts.map((f) => (
-              <div key={f.label} className="facts__row">
-                <dt>{f.label}</dt>
-                <dd>{f.value}</dd>
+              <div key={f.label} className="tile">
+                <span className="tile__value">{f.value}</span>
+                <span className="tile__label muted">{f.label}</span>
               </div>
             ))}
-          </dl>
+          </div>
         </Section>
       )}
 
@@ -86,8 +100,7 @@ export function InfoCard({ record, onTurns, onDelete }: Props) {
         <Section title="Price & where to buy">
           {price && (
             <p>
-              <span className="price">{price}</span>{' '}
-              <span className="muted">{item.price?.note || 'Estimated'}</span>
+              <span className="price">{price}</span> <span className="muted">{item.price?.note || 'Estimated'}</span>
             </p>
           )}
           {item.whereToBuy.length > 0 && <p>{item.whereToBuy.join(' · ')}</p>}
@@ -132,14 +145,15 @@ export function InfoCard({ record, onTurns, onDelete }: Props) {
         </Section>
       )}
 
-      <p className="card__meta">
-        {item.source === 'barcode' ? 'Product database lookup' : 'Identified by AI'} · Scanned{' '}
+      <p className="meta muted">
+        {item.source === 'barcode' ? 'Product database lookup' : 'Identified on your device or by AI'} · Scanned{' '}
         {new Date(record.createdAt).toLocaleString()}
       </p>
 
       {!askOpen ? (
         <button className="btn btn--primary btn--xl" onClick={() => setAskOpen(true)}>
-          Ask about this
+          Ask Doohav about this
+          <Icon name="right" size={20} />
         </button>
       ) : (
         <AskPanel item={item} turns={record.followUps} onTurns={(turns) => onTurns(record.id, turns)} />
@@ -149,14 +163,5 @@ export function InfoCard({ record, onTurns, onDelete }: Props) {
         Delete from history
       </button>
     </article>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="section">
-      <h3>{title}</h3>
-      {children}
-    </section>
   );
 }
