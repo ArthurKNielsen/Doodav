@@ -38,7 +38,7 @@ describe('buildOnDeviceItem', () => {
       { title: 'Mug', extract: 'A mug is a type of cup. It is used for drinking.', url: 'https://en.wikipedia.org/wiki/Mug' },
     );
     expect(item?.name).toBe('Coffee mug');
-    expect(item?.identified).toBe(true);
+    expect(item?.identified).toBe(false);
     expect(item?.confidence).toBe('high');
     expect(item?.description).toBe('A mug is a type of cup.');
     expect(item?.keyFacts).toEqual([{ label: 'Source', value: 'Wikipedia' }]);

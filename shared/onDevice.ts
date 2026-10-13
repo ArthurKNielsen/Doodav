@@ -53,7 +53,8 @@ export function buildOnDeviceItem(predictions: Prediction[], wiki: WikiSummary |
     disposal: null,
     funFact: null,
     isFood: false,
-    identified,
+    // The on-device model only knows general categories, so it never claims an exact identification.
+    identified: false,
     confidence,
     confidenceNote:
       `Guessed on your device, ${pct}% sure.` +
