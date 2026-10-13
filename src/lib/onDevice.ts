@@ -4,8 +4,6 @@ import { buildOnDeviceItem, prettyLabel, type Prediction, type WikiSummary } fro
 import type { ScanItem } from '../../shared/types';
 import { getOnDeviceStatus, patchOnDeviceStatus } from './aiStatus';
 
-// Pinned version of the browser build of Hugging Face's transformers.js.
-const LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1/dist/transformers.web.min.js';
 // ImageNet classifier (1000 everyday object classes) with 8-bit weights to keep the download small.
 const MODEL_ID = 'Xenova/vit-base-patch16-224';
 
@@ -34,7 +32,8 @@ function loadClassifier(): Promise<Classifier> {
     const startedAt = Date.now();
     patchOnDeviceStatus({ state: 'loading', progress: 0, startedAt, loadMs: null, message: null });
     classifierPromise = (async () => {
-      const lib = (await import(/* @vite-ignore */ LIBRARY_URL)) as ClassifierLibrary;
+      // Bundled by Vite and split into its own file, so it downloads only when a scan first needs it.
+      const lib = (await import('@huggingface/transformers')) as unknown as ClassifierLibrary;
       lib.env.allowLocalModels = false;
       return lib.pipeline('image-classification', MODEL_ID, {
         dtype: 'q8',
